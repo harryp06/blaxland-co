@@ -59,6 +59,39 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
+## Colour
+
+Near-black base, cream body text, and **lime (`#D8FF00`) as the single
+accent** — roughly 5% of the page, reserved almost entirely for the action.
+Hue 69°, sampled from the product photography.
+
+One hard rule, because the numbers are brutal:
+
+| | ratio | |
+|---|---|---|
+| black on lime | **18.2:1** | use this |
+| lime on near-black | **17.1:1** | use this |
+| white on lime | **1.2:1** | never |
+| lime on cream | **1.0:1** | never — literally invisible |
+
+Lime is a surface you put *black* text on, or text on a dark background.
+Wherever `--lime` is a background, the foreground must be `--ink`.
+
+Magenta (`#ED2AD0`) exists for urgency only — a price drop, low stock — at
+tiny surface area. It is never a second button. The page must only ever have
+one loudest thing on it, or the call to action stops being it.
+
+After any colour change:
+
+```sh
+python3 tools/contrast.py
+```
+
+It reads the tokens straight out of `site.css`, checks every pair the site
+uses against WCAG AA, and exits non-zero on failure. It also verifies the
+forbidden combinations are *still* unusable, so the rule above can't quietly
+stop being true.
+
 ## Claims policy
 
 Three rules, and they are not negotiable:

@@ -1,15 +1,40 @@
-/* BLAXLAND 30 — design tokens carried over from the Base44 build
-   (src/index.css + tailwind.config.js) so the rebuild matches the brand. */
+/* BLAXLAND 30 — design tokens.
+   Base and type carried over from the Base44 build; accent rebuilt around the
+   product's lime.
+
+   THE LIME RULE, and it is not negotiable:
+     black on lime .... 18.2:1   use this
+     lime on near-black 17.1:1   use this
+     WHITE on lime ..... 1.2:1   never. fails every standard.
+     lime on cream ..... 1.0:1   never. literally invisible.
+   Lime is a surface you put BLACK text on, or text on a dark background.
+   Anywhere --lime is a background, the foreground must be --ink.
+
+   Hue 69deg is sampled from the product images (three files agreed at 66-72).
+   Saturation is pushed well past the product's own ~55% for screen punch, so
+   the accent is more vivid than the physical insole. Confirm against a real
+   photo before launch.
+
+   Run tools/contrast.py after ANY change here. Every pair must pass WCAG AA.
+*/
 
 :root {
   --bg: #0b0b0b;
+  --ink: #000;
   --surface: hsl(0 0% 8.2%);
   --surface-2: hsl(0 0% 5.9%);
   --fg: hsl(42 31% 94%);
   --muted: hsl(37 12% 79%);
   --muted-bg: hsl(0 0% 12%);
-  --accent: hsl(350 85% 42%);
-  --gold: hsl(48 96% 53%);
+
+  /* The one accent. ~5% of the page, reserved for the action. */
+  --lime: #d8ff00;
+  --lime-dim: #c7ea00;
+
+  /* Urgency only — a price drop, low stock. Tiny surface area.
+     Never a second button; the page must only ever have one loudest thing. */
+  --magenta: #ed2ad0;
+
   --border: hsl(0 0% 16.5%);
   --radius: 0.25rem;
   --font-heading: "Instrument Serif", Georgia, "Times New Roman", serif;
@@ -51,12 +76,12 @@ a {
 }
 
 ::selection {
-  background: var(--accent);
-  color: #fff;
+  background: var(--lime);
+  color: var(--ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--fg);
+  outline: 2px solid var(--lime);
   outline-offset: 3px;
 }
 
@@ -150,8 +175,8 @@ section:first-of-type {
 /* ---------- announcement + nav ---------- */
 
 .announce {
-  background: var(--accent);
-  color: #fff;
+  background: var(--lime);
+  color: var(--ink);
   text-align: center;
   font-size: 0.72rem;
   font-weight: 600;
@@ -249,10 +274,10 @@ section:first-of-type {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.9rem 1.6rem;
-  border: 1px solid var(--fg);
+  border: 1px solid var(--lime);
   border-radius: var(--radius);
-  background: var(--fg);
-  color: #000;
+  background: var(--lime);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.85rem;
   font-weight: 700;
@@ -355,8 +380,8 @@ section:first-of-type {
   position: absolute;
   top: -0.65rem;
   left: 1.5rem;
-  background: var(--accent);
-  color: #fff;
+  background: var(--lime);
+  color: var(--ink);
   font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -414,7 +439,7 @@ section:first-of-type {
 .step-num {
   font-family: var(--font-heading);
   font-size: 2rem;
-  color: var(--accent);
+  color: var(--lime);
   line-height: 1;
   display: block;
   margin-bottom: 0.75rem;
@@ -504,11 +529,12 @@ details .answer {
 
 /* ---------- notice ---------- */
 
+/* Urgency only. If this appears more than once on a page, something is wrong. */
 .notice {
-  border: 1px solid var(--accent);
+  border: 1px solid var(--magenta);
   border-left-width: 3px;
   border-radius: var(--radius);
-  background: rgba(199, 15, 49, 0.08);
+  background: rgba(237, 42, 208, 0.08);
   padding: 1.1rem 1.25rem;
   font-size: 0.92rem;
 }
