@@ -27,19 +27,48 @@ const state = { client: null, version: null, product: null, selection: {} };
 const el = (sel, root = document) => root.querySelector(sel);
 
 function money(v) {
-  // Wix gives formatted strings in several places depending on version and
-  // field. Prefer whatever is already formatted; only build our own as a last
-  // resort, since we must not invent a currency symbol.
-  if (!v && v !== 0) return null;
+  // Display only. This NEVER does arithmetic on a price — no multiplying,
+  // no dividing, no per-unit figures, no totals. Wix is the only thing
+  // allowed to decide what a number is; this just prints the one it sent.
+  //
+  // Preference order:
+  //   1. a string Wix already formatted  -> print verbatim
+  //   2. an amount + currency from Wix   -> format with Intl, Wix's currency
+  //   3. anything else                   -> print nothing
+  // A missing price is correct behaviour. Inventing "A$" around a bare number
+  // would be guessing at a currency, and a wrong currency is worse than none.
+  if (v == null) return null;
   if (typeof v === "string") return v;
-  if (typeof v === "object") {
-    return (
-      v.formattedAmount || v.formattedPrice || v.formatted?.price ||
-      (v.amount != null ? `A$${Number(v.amount).toFixed(2)}` : null) ||
-      (v.price != null ? `A$${Number(v.price).toFixed(2)}` : null)
-    );
+  if (typeof v !== "object") return null;
+
+  const preformatted =
+    v.formattedAmount || v.formattedPrice || v.formatted?.price ||
+    v.formatted?.amount || v.formattedConvertedAmount;
+  if (preformatted) return preformatted;
+
+  const amount = v.amount ?? v.price ?? v.value;
+  const currency = v.currency || v.currencyCode;
+  if (amount == null || !currency) return null;
+
+  try {
+    return new Intl.NumberFormat("en-AU", {
+      style: "currency",
+      currency,
+    }).format(Number(amount));
+  } catch {
+    return null;
   }
-  return `A$${Number(v).toFixed(2)}`;
+}
+
+function checkoutUrls() {
+  // Production values live in wix-config.js. On the preview host, point back
+  // at the preview so checkout is testable before DNS moves.
+  const onPreview =
+    location.hostname.endsWith("github.io") || location.hostname === "localhost";
+  if (!onPreview) return { postFlow: CFG.urls.postFlow, thankYou: CFG.urls.thankYou };
+
+  const base = location.origin + location.pathname.replace(/[^/]*$/, "");
+  return { postFlow: base, thankYou: base + "thank-you/" };
 }
 
 function imageUrl(src) {
@@ -334,13 +363,22 @@ async function onBuy(e) {
         channelType: state.ChannelType?.WEB || "WEB",
       });
 
+    const urls = checkoutUrls();
     const redirect = await state.client.redirects.createRedirectSession({
       ecomCheckout: { checkoutId },
-      callbacks: { postFlowUrl: window.location.href },
+      callbacks: {
+        // After a completed order.
+        thankYouPageUrl: urls.thankYou,
+        // If they abandon or the flow is interrupted.
+        postFlowUrl: urls.postFlow,
+      },
     });
 
     const url = redirect?.redirectSession?.fullUrl;
     if (!url) throw new Error("Wix did not return a checkout URL.");
+    // Pass the URL through untouched — its query string carries state Wix
+    // needs to render the hosted page, and the docs are explicit that it must
+    // not be stripped, reordered or rewritten.
     window.location = url;
   } catch (err) {
     btn.removeAttribute("aria-disabled");

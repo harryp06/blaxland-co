@@ -1,24 +1,17 @@
-/* Wires offer buttons to their Stripe Payment Links.
- * No build step, no framework, no dependencies. */
+/* Page furniture: fallback buttons, marquee, footer year.
+ * The live storefront lives in shop.js. No framework, no dependencies. */
 
 (function () {
   "use strict";
 
-  var cfg = window.BLAXLAND || { paymentLinks: {}, storeOpen: false };
-  var links = cfg.paymentLinks || {};
-
+  // The [data-offer] cards are the fallback shown only when the Wix
+  // storefront cannot load. If Wix is unreachable there is no way to take an
+  // order, so these are always disabled — they exist to keep the page intact,
+  // not to sell. The real, live buy button is built by shop.js.
   document.querySelectorAll("[data-offer]").forEach(function (btn) {
-    var url = links[btn.dataset.offer];
-    var ready = cfg.storeOpen && typeof url === "string" && url.length > 0;
-
-    if (ready) {
-      btn.setAttribute("href", url);
-      btn.removeAttribute("aria-disabled");
-    } else {
-      btn.removeAttribute("href");
-      btn.setAttribute("aria-disabled", "true");
-      btn.textContent = "Opening soon";
-    }
+    btn.removeAttribute("href");
+    btn.setAttribute("aria-disabled", "true");
+    btn.textContent = "Opening soon";
   });
 
   // Marquee needs its content tripled for the -33.3333% keyframe to loop

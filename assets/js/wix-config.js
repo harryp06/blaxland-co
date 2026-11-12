@@ -25,6 +25,18 @@ window.WIX_CONFIG = {
   // Wix Stores' own app ID. Same on every Wix site — don't change it.
   storesAppId: "215238eb-22a5-4c36-9e7b-e7c08025e04e",
 
+  // Where Wix sends the customer when the hosted checkout finishes.
+  //   thankYou   — after a successful order
+  //   postFlow   — if they abandon or the flow is interrupted
+  // Both must be listed as ALLOWED REDIRECT DOMAINS in Headless Settings or
+  // Wix refuses the redirect. On the github.io preview these are overridden
+  // with the preview origin, so checkout can be tested before DNS moves —
+  // which means the preview host needs allowlisting too.
+  urls: {
+    postFlow: "https://www.blaxland.co",
+    thankYou: "https://www.blaxland.co/thank-you",
+  },
+
   // SDK modules, pinned to exact versions. esm.sh serves the npm packages as
   // browser ES modules, which is what lets this work with no build step.
   // Pinned deliberately: an unpinned @latest would let a third party change

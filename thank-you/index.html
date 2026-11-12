@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Order confirmed · BLAXLAND 30</title>
+    <meta name="description" content="Thanks for your BLAXLAND 30 order." />
+    <meta name="theme-color" content="#0b0b0b" />
+    <!-- Keep this page out of search results. It is only ever reached by
+         returning from checkout, and an indexed thank-you page is a classic
+         way to pollute conversion tracking. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../assets/css/site.css" />
+  </head>
+
+  <body>
+    <header class="nav">
+      <div class="wrap nav-inner">
+        <a class="wordmark" href="../index.html">BLAXLAND 30</a>
+        <ul class="nav-links">
+          <li><a href="../index.html#order">Order</a></li>
+          <li><a href="../index.html#how">How it works</a></li>
+          <li><a href="../index.html#faq">FAQ</a></li>
+          <li><a href="../policies.html">Shipping &amp; returns</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero wrap">
+        <p class="eyebrow">Order confirmed</p>
+        <h1>Thanks.<br /><em>You're all set.</em></h1>
+        <p class="lede" id="order-ref" hidden></p>
+        <p class="lede">
+          Your order is in. Wix has emailed your receipt — check your junk
+          folder if it hasn't arrived within a few minutes.
+        </p>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <p class="eyebrow">What happens next</p>
+          <h2>From here.</h2>
+          <div class="grid grid-3" style="margin-top: 2rem">
+            <div class="card">
+              <span class="step-num">01</span>
+              <h3>We pack your order</h3>
+              <p>
+                Your insoles are prepared and sent by our manufacturing partner
+                in the heights and sizes you chose.
+              </p>
+            </div>
+            <div class="card">
+              <span class="step-num">02</span>
+              <h3>We email your tracking</h3>
+              <p>
+                As soon as the order ships, you'll get a tracking link at the
+                address you checked out with.
+              </p>
+            </div>
+            <div class="card">
+              <span class="step-num">03</span>
+              <h3>Put them in</h3>
+              <p>
+                Take out your old insoles, trim to match if they're a little
+                long, and you're done.
+              </p>
+            </div>
+          </div>
+
+          <p class="fineprint" style="margin-top: 2rem">
+            Something not right? Email
+            <a href="mailto:support@blaxland.co">support@blaxland.co</a> with
+            your order number. If an item is faulty or not as described you are
+            entitled to a repair, replacement or refund under the Australian
+            Consumer Law.
+          </p>
+
+          <div class="hero-actions" style="justify-content: flex-start">
+            <a class="btn btn-ghost" href="../index.html">Back to the store</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <div class="footer-grid">
+          <div>
+            <a class="wordmark" href="../index.html">BLAXLAND 30</a>
+            <p class="fineprint" style="margin-top: 0.9rem; max-width: 22rem">
+              Height-boosting insoles. Discreet and comfortable. Australian
+              owned, shipping within Australia.
+            </p>
+          </div>
+          <div>
+            <h4>Shop</h4>
+            <ul>
+              <li><a href="../index.html#order">Order</a></li>
+              <li><a href="../index.html#how">How it works</a></li>
+              <li><a href="../index.html#faq">FAQ</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Help</h4>
+            <ul>
+              <li><a href="../policies.html">Shipping &amp; returns</a></li>
+              <li>
+                <a href="../policies.html#privacy">Privacy &amp; terms</a>
+              </li>
+              <li>
+                <a href="mailto:support@blaxland.co">support@blaxland.co</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p class="footer-legal">
+          &copy; <span data-year>2026</span> BLAXLAND 30. All prices in AUD.
+          Prices are not GST-inclusive; BLAXLAND 30 is not registered for GST.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Show an order reference ONLY if Wix put one in the URL. Nothing is
+      // fabricated, and no order total is shown or recalculated here — the
+      // authoritative figures are on the Wix receipt.
+      (function () {
+        var p = new URLSearchParams(location.search);
+        var ref =
+          p.get("orderId") || p.get("orderNumber") || p.get("order_id") || "";
+        if (ref) {
+          var node = document.getElementById("order-ref");
+          node.textContent = "Order reference: " + ref;
+          node.hidden = false;
+        }
+        var yr = document.querySelector("[data-year]");
+        if (yr) yr.textContent = new Date().getFullYear();
+      })();
+    </script>
+  </body>
+</html>
