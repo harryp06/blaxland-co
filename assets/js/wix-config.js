@@ -15,12 +15,19 @@
  */
 
 window.WIX_CONFIG = {
-  // ⚠️ NOT YET SET. The site falls back to its static content until this is a
-  // real ID. "PASTE_CLIENT_ID" is the placeholder, not a value.
-  clientId: "PASTE_CLIENT_ID",
+  clientId: "1f203c9f-1337-48da-9947-73c84047134d",
 
   // The volt green insole.
   productId: "e6198709-88f4-4449-bc06-f7502bf189aa",
+
+  // Wix's Catalog V3 product API returns bare amounts ("34.56") with no
+  // currency code attached, and site-properties is not readable with a visitor
+  // token. So the currency LABEL is set here. This is not a price: Wix remains
+  // the only thing that decides the amount, and checkout shows the real total.
+  // It must match the Wix store's currency — if it doesn't, the page would put
+  // the wrong symbol in front of a correct number. Set to null to show no
+  // prices at all on the page and let checkout be the only place they appear.
+  currency: "AUD",
 
   // Wix Stores' own app ID. Same on every Wix site — don't change it.
   storesAppId: "215238eb-22a5-4c36-9e7b-e7c08025e04e",

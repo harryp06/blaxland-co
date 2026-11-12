@@ -47,7 +47,10 @@ function money(v) {
   if (preformatted) return preformatted;
 
   const amount = v.amount ?? v.price ?? v.value;
-  const currency = v.currency || v.currencyCode;
+  // Catalog V3 returns amounts with no currency code, so fall back to the
+  // label configured in wix-config.js. If that is unset, print nothing rather
+  // than put a guessed symbol in front of a real number.
+  const currency = v.currency || v.currencyCode || CFG.currency;
   if (amount == null || !currency) return null;
 
   try {
@@ -196,11 +199,15 @@ function normalise(version, p) {
     const main = p.media?.main || p.media?.mainMedia;
     const items = p.media?.itemsInfo?.items || p.media?.items || [];
     out.images = [main, ...items].map(imageUrl).filter(Boolean);
+    // V3 matches variants by optionId + choiceId, never by name, so both IDs
+    // have to survive normalisation.
     out.options = (p.options || []).map((o) => ({
+      id: o.id,
       name: o.name,
       choices: (o.choicesSettings?.choices || o.choices || []).map((c) => ({
-        label: c.name || c.choiceId || c.value,
-        value: c.choiceId || c.name || c.value,
+        id: c.choiceId,
+        label: c.name || c.key || c.choiceId,
+        value: c.choiceId || c.name,
       })),
     }));
     out.variants = p.variantsInfo?.variants || [];
@@ -221,10 +228,10 @@ function renderProduct(prod) {
 
   const optionsHtml = prod.options
     .map(
-      (o, i) => `
+      (o) => `
       <label class="field">
         <span class="field-label">${text(o.name)}</span>
-        <select data-option="${text(o.name)}" ${i === 0 ? "autofocus" : ""}>
+        <select data-option="${text(o.name)}" data-option-id="${text(o.id || "")}">
           <option value="">Choose ${text(o.name.toLowerCase())}</option>
           ${o.choices
             .map((c) => `<option value="${text(c.value)}">${text(c.label)}</option>`)
@@ -238,7 +245,7 @@ function renderProduct(prod) {
     <div class="offer" data-featured>
       ${img ? `<img class="shop-img" src="${text(img)}" alt="${text(prod.name)}" loading="lazy" width="600" height="600">` : ""}
       <span class="offer-label">${text(prod.name)}</span>
-      ${prod.price ? `<span class="offer-price">${text(prod.price)}</span>` : ""}
+      <span class="offer-price" id="shop-price">${text(prod.price || "")}</span>
       ${optionsHtml}
       <a class="btn btn-block" id="buy" role="button">Add to cart</a>
       <p class="fineprint" id="shop-msg" role="status" aria-live="polite"></p>
@@ -246,8 +253,19 @@ function renderProduct(prod) {
 
   mount.querySelectorAll("select").forEach((s) =>
     s.addEventListener("change", () => {
-      state.selection[s.dataset.option] = s.value;
+      const name = s.dataset.option;
+      if (!s.value) {
+        delete state.selection[name];
+      } else {
+        state.selection[name] = {
+          name,
+          optionId: s.dataset.optionId,
+          choiceId: s.value,
+          label: s.selectedOptions[0]?.textContent || s.value,
+        };
+      }
       el("#shop-msg").textContent = "";
+      refreshPrice();
     })
   );
 
@@ -300,21 +318,42 @@ function fallback(message) {
 
 /* ---------- cart + checkout ---------- */
 
-function variantIdFor(prod, selection) {
-  // V3 only: find the variant whose choices match every selection.
+function matchVariant(prod, selection) {
+  // V3 only. Verified against the live store: a variant's choices look like
+  //   { optionChoiceIds: { optionId, choiceId } }
+  // There are no names in there at all, so matching must be on IDs.
   if (!prod.variants?.length) return null;
-  const want = Object.entries(selection);
-  const hit = prod.variants.find((v) => {
-    const choices = v.choices || v.optionChoices || [];
-    return want.every(([name, value]) =>
-      choices.some(
-        (c) =>
-          (c.optionName === name || c.name === name) &&
-          (c.choiceName === value || c.value === value || c.choiceId === value)
+  const want = Object.values(selection);
+  return (
+    prod.variants.find((v) =>
+      want.every((sel) =>
+        (v.choices || []).some(
+          (c) =>
+            c.optionChoiceIds?.optionId === sel.optionId &&
+            c.optionChoiceIds?.choiceId === sel.choiceId
+        )
       )
-    );
-  });
-  return hit?._id || hit?.id || null;
+    ) || null
+  );
+}
+
+function variantPrice(variant) {
+  return money(variant?.price?.actualPrice || variant?.price);
+}
+
+function refreshPrice() {
+  // Once every option is chosen, show that exact variant's price straight from
+  // Wix. Still no arithmetic — this reads a different field, it doesn't derive
+  // a number from another one.
+  const node = el("#shop-price");
+  if (!node || state.version !== "v3") return;
+  const chosen = Object.keys(state.selection).length;
+  if (chosen < state.product.options.length) {
+    node.textContent = state.product.price || "";
+    return;
+  }
+  const v = matchVariant(state.product, state.selection);
+  node.textContent = (v && variantPrice(v)) || state.product.price || "";
 }
 
 async function onBuy(e) {
@@ -338,11 +377,18 @@ async function onBuy(e) {
   try {
     let options;
     if (state.version === "v1") {
-      options = { options: { ...state.selection } };
+      // V1 takes a plain name -> chosen-value map.
+      const map = {};
+      for (const s of Object.values(state.selection)) map[s.name] = s.label;
+      options = { options: map };
     } else {
-      const variantId = variantIdFor(prod, state.selection);
-      if (!variantId) throw new Error("That combination isn't available.");
-      options = { variantId };
+      // V3 takes the resolved variant.
+      const variant = matchVariant(prod, state.selection);
+      if (!variant?.id) throw new Error("That combination isn't available.");
+      if (variant.inventoryStatus && variant.inventoryStatus.inStock === false) {
+        throw new Error("That combination is out of stock.");
+      }
+      options = { variantId: variant.id };
     }
 
     await state.client.currentCart.addToCurrentCart({
