@@ -78,7 +78,11 @@
             each of your go-to shoes and never swap them over.
           </p>
 
-          <div class="offers">
+          <!-- Live product from Wix Stores. Hidden until it loads, so the
+               static cards below stay visible if Wix is unreachable. -->
+          <div class="offers" id="shop" hidden></div>
+
+          <div class="offers" id="static-offers">
             <div class="offer">
               <span class="offer-label">1 pair</span>
               <span class="offer-price">A$52.95</span>
@@ -118,6 +122,8 @@
               >
             </div>
           </div>
+
+          <p class="fineprint" id="shop-fallback" hidden></p>
 
           <p class="fineprint" style="margin-top: 1.5rem">
             All prices in Australian dollars. We ship within Australia only.
@@ -391,5 +397,7 @@
 
     <script src="assets/js/config.js"></script>
     <script src="assets/js/site.js"></script>
+    <script src="assets/js/wix-config.js"></script>
+    <script type="module" src="assets/js/shop.js"></script>
   </body>
 </html>
