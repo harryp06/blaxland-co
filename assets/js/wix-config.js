@@ -41,7 +41,7 @@ window.WIX_CONFIG = {
   // which means the preview host needs allowlisting too.
   urls: {
     postFlow: "https://www.blaxland.co",
-    thankYou: "https://www.blaxland.co/thank-you",
+    thankYou: "https://www.blaxland.co/thank-you/",
   },
 
   // SDK modules, pinned to exact versions. esm.sh serves the npm packages as
