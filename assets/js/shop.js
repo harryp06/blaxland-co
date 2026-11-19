@@ -107,9 +107,18 @@ async function makeClient() {
     import(/* @vite-ignore */ CFG.sdk.redirects),
   ]);
 
+  // Visitor tokens last 4 hours. Reusing an expired one produces an opaque
+  // API failure that looks exactly like a code bug, so discard anything older
+  // than 3 hours and let the SDK mint a fresh one.
   let tokens = null;
   try {
-    tokens = JSON.parse(localStorage.getItem(TOKENS_KEY) || "null");
+    const saved = JSON.parse(localStorage.getItem(TOKENS_KEY) || "null");
+    if (saved && saved.savedAt && Date.now() - saved.savedAt < 3 * 60 * 60 * 1000) {
+      tokens = saved.tokens;
+    } else if (saved) {
+      localStorage.removeItem(TOKENS_KEY);
+      console.info("[blaxland] discarded stale Wix visitor tokens");
+    }
   } catch {
     tokens = null;
   }
@@ -126,7 +135,10 @@ async function makeClient() {
 
   if (!tokens?.accessToken?.value) {
     const fresh = await client.auth.generateVisitorTokens();
-    localStorage.setItem(TOKENS_KEY, JSON.stringify(fresh));
+    localStorage.setItem(
+      TOKENS_KEY,
+      JSON.stringify({ tokens: fresh, savedAt: Date.now() })
+    );
   }
 
   state.ChannelType = ecom.currentCart?.ChannelType;
@@ -305,14 +317,14 @@ function fallback(message) {
   // console, where Harry can read it and a customer never has to.
   console.warn("[blaxland] Wix storefront unavailable:", message);
 
-  // Surface it on the preview host only, so setup problems are obvious while
-  // building without ever showing a stack trace to a real customer.
-  if (location.hostname.endsWith("github.io") || location.hostname === "localhost") {
-    const note = el("#shop-fallback");
-    if (note) {
-      note.hidden = false;
-      note.textContent = `Wix not connected: ${message}`;
-    }
+  // Shown everywhere while we are still bringing this online. There are no
+  // customers yet, and a visible reason is worth far more right now than a
+  // tidy page that hides why the store isn't loading. Restrict this to the
+  // preview host again once the first real order has gone through.
+  const note = el("#shop-fallback");
+  if (note) {
+    note.hidden = false;
+    note.textContent = `Store not loading: ${message}`;
   }
 }
 
@@ -429,9 +441,27 @@ async function onBuy(e) {
   } catch (err) {
     btn.removeAttribute("aria-disabled");
     btn.textContent = original;
-    msg.textContent =
-      "Sorry — we couldn't start checkout. Please try again, or email support@blaxland.co.";
+
+    // Show the ACTUAL reason, not a generic apology. Every failure used to
+    // render the same sentence, which made the error useless for diagnosis —
+    // it could equally have been a stale token, an unavailable variant or a
+    // rejected redirect, and there was no way to tell them apart.
+    const detail =
+      err?.details?.applicationError?.description ||
+      err?.message ||
+      String(err);
+
+    msg.innerHTML =
+      '<strong>Checkout failed.</strong> ' +
+      text(detail) +
+      '<br>Please try again, or email ' +
+      '<a href="mailto:support@blaxland.co">support@blaxland.co</a>.';
+
+    // Full object to the console for anything the message doesn't capture.
     console.error("[blaxland] checkout failed:", err);
+    console.error("[blaxland] selection:", JSON.stringify(state.selection));
+    console.error("[blaxland] catalog version:", state.version);
+    if (err?.response) console.error("[blaxland] response:", err.response);
   }
 }
 
