@@ -24,6 +24,23 @@
     }
   }
 
+  // Blur-up: fade each photo in over its placeholder once it has decoded.
+  // Images already in cache fire no load event, so check .complete too —
+  // otherwise a returning visitor sees a permanently blurred page.
+  document.querySelectorAll(".ph img").forEach(function (img) {
+    if (img.complete && img.naturalWidth > 0) {
+      img.classList.add("loaded");
+    } else {
+      img.addEventListener("load", function () {
+        img.classList.add("loaded");
+      });
+      // If it fails, show it anyway rather than leave a blurred ghost.
+      img.addEventListener("error", function () {
+        img.classList.add("loaded");
+      });
+    }
+  });
+
   // Current year in the footer.
   var yr = document.querySelector("[data-year]");
   if (yr) yr.textContent = new Date().getFullYear();

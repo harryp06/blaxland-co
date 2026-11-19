@@ -430,6 +430,42 @@ section:first-of-type {
   margin-bottom: 1.1rem;
 }
 
+/* ---------- blur-up image placeholder ----------
+   The wrapper carries an inline aspect-ratio and a ~20px blurred copy of the
+   photo as a background data-URI. The space is reserved before anything loads
+   (so the page never jumps — CLS stays at zero) and the visitor sees a blurred
+   impression of the real photo immediately, with no extra request. The full
+   image fades in on top once it arrives. Generate both with tools/images.py. */
+
+.ph {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background-color: var(--surface-2);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.ph img {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.ph img.loaded {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ph img {
+    transition: none;
+  }
+}
+
 .field {
   display: block;
   margin: 0 0 0.85rem;
