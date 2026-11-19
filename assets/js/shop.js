@@ -263,6 +263,14 @@ function renderProduct(prod) {
       <span class="offer-label">${text(prod.name)}</span>
       <span class="offer-price" id="shop-price">${text(prod.price || "")}</span>
       ${optionsHtml}
+      <label class="field">
+        <span class="field-label">Pairs</span>
+        <select id="qty">
+          ${[1, 2, 3, 4, 5]
+            .map((n) => `<option value="${n}">${n}</option>`)
+            .join("")}
+        </select>
+      </label>
       <a class="btn btn-block" id="buy" role="button">Add to cart</a>
       <p class="fineprint" id="shop-msg" role="status" aria-live="polite"></p>
     </div>`;
@@ -410,6 +418,8 @@ async function onBuy(e) {
       options = { variantId };
     }
 
+    const qty = Math.max(1, parseInt(el("#qty")?.value, 10) || 1);
+
     await state.client.currentCart.addToCurrentCart({
       lineItems: [
         {
@@ -418,7 +428,7 @@ async function onBuy(e) {
             catalogItemId: prod.id,
             options,
           },
-          quantity: 1,
+          quantity: qty,
         },
       ],
     });
