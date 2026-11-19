@@ -213,8 +213,12 @@ function normalise(version, p) {
     out.images = [main, ...items].map(imageUrl).filter(Boolean);
     // V3 matches variants by optionId + choiceId, never by name, so both IDs
     // have to survive normalisation.
+    // The SDK uses Wix's `_id` convention where the raw REST API returns
+    // `id`. Reading only `id` yields undefined, every optionId comparison in
+    // matchVariant then fails, and NO variant ever resolves — which is
+    // exactly how this broke. Accept both.
     out.options = (p.options || []).map((o) => ({
-      id: o.id,
+      id: o._id || o.id,
       name: o.name,
       choices: (o.choicesSettings?.choices || o.choices || []).map((c) => ({
         id: c.choiceId,
@@ -394,13 +398,16 @@ async function onBuy(e) {
       for (const s of Object.values(state.selection)) map[s.name] = s.label;
       options = { options: map };
     } else {
-      // V3 takes the resolved variant.
+      // V3 takes the resolved variant. Same `_id` / `id` caveat as above.
       const variant = matchVariant(prod, state.selection);
-      if (!variant?.id) throw new Error("That combination isn't available.");
+      const variantId = variant?._id || variant?.id;
+      if (!variantId) throw new Error("That combination isn't available.");
       if (variant.inventoryStatus && variant.inventoryStatus.inStock === false) {
-        throw new Error("That combination is out of stock.");
+        throw new Error(
+          "That option is out of stock in Wix — set its inventory in the Wix dashboard."
+        );
       }
-      options = { variantId: variant.id };
+      options = { variantId };
     }
 
     await state.client.currentCart.addToCurrentCart({
