@@ -32,6 +32,14 @@ PAIRS = [
     ("focus ring on surface","--lime",    "--surface", 3.0),
     ("magenta on dark",      "--magenta", "--bg",      3.0),
     ("border on dark",       "--border",  "--bg",      1.0),
+    # Buy block (light "paper" panel)
+    ("buy: ink on paper",    "--ink",     "--paper",   4.5),
+    ("buy: soft ink on paper","--ink-soft","--paper",  4.5),
+    ("buy: soft ink on paper-2","--ink-soft","--paper-2",4.5),
+    ("buy: option edge",     "--line",    "--paper",   3.0),
+    ("buy: thumb edge",      "--line",    "--paper-2", 1.5),
+    ("buy: lime tag on ink", "--lime",    "--ink",     4.5),
+    ("buy: paper on ink pill","--paper",  "--ink",     4.5),
 ]
 
 # Combinations that must NEVER ship. Checked in reverse: these are expected to
@@ -40,6 +48,7 @@ PAIRS = [
 FORBIDDEN = [
     ("white on lime",   "#ffffff", "--lime"),
     ("lime on cream",   "--lime",  "--fg"),
+    ("lime on paper",   "--lime",  "--paper"),
     ("white on magenta","#ffffff", "--magenta"),
 ]
 

@@ -39,6 +39,17 @@
   --radius: 0.25rem;
   --font-heading: "Instrument Serif", Georgia, "Times New Roman", serif;
   --font-body: "Outfit", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Condensed display face for the buy block's headline and lift figures. */
+  --font-display: "Anton", Impact, "Arial Narrow", sans-serif;
+
+  /* Paper: the light ground of the buy block. --paper matches --fg, so the
+     cream text colour and the cream panel are one colour, not two. Lime is
+     never text or a lone boundary on paper (1.0:1) — only an accent sitting
+     on --ink, or a button wearing an ink border. */
+  --paper: hsl(42 31% 94%);
+  --paper-2: hsl(43 15% 86%);
+  --ink-soft: hsl(40 6% 28%);
+  --line: hsl(40 6% 50%);
   --wrap: 68rem;
 }
 
@@ -748,5 +759,371 @@ footer a:hover {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- buy block (product page) ----------
+   Light "paper" panel so the moment of purchase is the brightest thing on a
+   dark page. Same lime rule applies: the button is lime with ink text AND an
+   ink border, because lime against paper has no visible edge at all. */
+
+.buy {
+  background: var(--paper);
+  color: var(--ink);
+  border-top: 0;
+}
+
+.buy a {
+  color: var(--ink);
+}
+
+.buy :focus-visible {
+  outline-color: var(--ink);
+}
+
+.buy-grid {
+  display: grid;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (min-width: 52rem) {
+  .buy-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 3.5rem;
+  }
+  /* Clears the sticky header (min-height 3.75rem) with room to spare. */
+  .buy-gallery {
+    position: sticky;
+    top: 5.25rem;
+  }
+}
+
+.buy-main {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.buy-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.buy-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.buy-thumb {
+  width: 4.5rem;
+  height: 4.5rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.buy-thumb[aria-pressed="true"] {
+  border: 2px solid var(--ink);
+}
+
+.buy-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.buy-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  min-width: 0;
+}
+
+.buy-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 0.75rem;
+}
+
+.buy-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.75rem, 7vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+}
+
+.buy-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.9rem 0 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.buy-price strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.75rem;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.choice-group {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.choice-group legend {
+  padding: 0;
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.choice-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pair-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.choice {
+  position: relative;
+  display: block;
+}
+
+/* Real radio inputs, visually hidden but still focusable and announced. */
+.choice input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+
+.choice-face {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  height: 100%;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.choice-face:hover {
+  border-color: var(--ink);
+}
+
+.choice input:checked + .choice-face {
+  border: 2px solid var(--ink);
+  padding: calc(0.9rem - 1px);
+  background: #fff;
+}
+
+.choice input:focus-visible + .choice-face {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.lift-bar-wrap {
+  display: flex;
+  align-items: flex-end;
+  height: 2.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.lift-bar {
+  display: block;
+  width: 1.6rem;
+  height: var(--h, 1rem);
+  background: var(--ink);
+  border-top: 4px solid var(--lime);
+}
+
+.lift-in {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.lift-mm {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.lift-name {
+  margin-top: 0.25rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.lift-fit {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.pill .choice-face {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.pill input:checked + .choice-face {
+  padding: 0 calc(1rem - 1px);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.pair .choice-face {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+}
+
+.pair input:checked + .choice-face {
+  padding: calc(1rem - 1px) calc(1.15rem - 1px);
+}
+
+.pair-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.pair-note {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+.pair-tag {
+  background: var(--ink);
+  color: var(--lime);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
+.choice-help {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.buy .btn {
+  border: 2px solid var(--ink);
+  padding: 1.15rem 1.6rem;
+  font-size: 0.95rem;
+}
+
+.buy-summary {
+  margin: 0.6rem 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.buy-summary:empty {
+  display: none;
+}
+
+.buy-assure {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  font-size: 0.92rem;
+  font-weight: 400;
+}
+
+.buy-assure li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.buy-assure svg {
+  flex: none;
+  margin-top: 0.2rem;
+}
+
+.buy .fineprint,
+.buy-fallback {
+  color: var(--ink-soft);
+}
+
+.buy-fallback p {
+  margin: 0;
+}
+
+.buy #shop-msg {
+  color: var(--ink);
+}
+
+@media (max-width: 30rem) {
+  .choice-row {
+    gap: 0.45rem;
+  }
+  .choice-face {
+    padding: 0.75rem 0.6rem;
+  }
+  .choice input:checked + .choice-face {
+    padding: calc(0.75rem - 1px) calc(0.6rem - 1px);
+  }
+  .lift-in {
+    font-size: 1.6rem;
   }
 }

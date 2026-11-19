@@ -6,7 +6,7 @@
     <title>BLAXLAND 30 · Height Insoles</title>
     <meta
       name="description"
-      content="Hidden height insoles in 15mm, 25mm and 35mm. EU sizes 35-44. Free shipping in Australia on 2+ pairs."
+      content="Height insoles in 0.6&quot;, 1.0&quot; and 1.4&quot; lifts. EU sizes 35-44. Free shipping in Australia on 2+ pairs."
     />
     <meta name="theme-color" content="#0b0b0b" />
     <link rel="canonical" href="https://blaxland.co/" />
@@ -15,14 +15,14 @@
     <meta property="og:title" content="BLAXLAND 30 · Height Insoles" />
     <meta
       property="og:description"
-      content="Hidden height insoles in 15mm, 25mm and 35mm. EU sizes 35-44. Free shipping in Australia on 2+ pairs."
+      content="Height insoles in 0.6&quot;, 1.0&quot; and 1.4&quot; lifts. EU sizes 35-44. Free shipping in Australia on 2+ pairs."
     />
     <meta property="og:url" content="https://blaxland.co/" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="assets/css/site.css" />
@@ -47,11 +47,11 @@
     <main>
       <!-- HERO -->
       <section class="hero wrap">
-        <p class="eyebrow">Hidden height insoles</p>
-        <h1>Stand taller<br /><em>in the shoes you own.</em></h1>
+        <p class="eyebrow">Height insoles</p>
+        <h1>Taller,<br /><em>by choice.</em></h1>
         <p class="lede">
-          Up to 35mm of lift, hidden inside your shoe. Choose your height, put
-          them in, leave them there.
+          Up to 1.4" (35mm) of lift, inside the shoes you already wear. Pick
+          your height, put them in, leave them there.
         </p>
         <div class="hero-actions">
           <a class="btn" href="#order">See the options</a>
@@ -62,49 +62,71 @@
       <div class="marquee" aria-hidden="true">
         <div class="marquee-track">
           <span
-            >Free shipping on 2+ pairs &nbsp;·&nbsp; Hidden inside your shoe
+            >Free shipping on 2+ pairs &nbsp;·&nbsp; Fits the shoes you own
             &nbsp;·&nbsp; Australian owned &nbsp;·&nbsp;
           </span>
         </div>
       </div>
 
-      <!-- ORDER ----------------------------------------------------------- -->
-      <section id="order">
-        <div class="wrap">
-          <p class="eyebrow">Order</p>
-          <h2>Pick your lift.</h2>
-          <p class="lede" style="margin-bottom: 2.5rem">
-            Choose your height and size. 15mm disappears into almost any shoe;
-            25mm and 35mm want a bit more room.
-          </p>
+      <!-- ORDER / PRODUCT ------------------------------------------------ -->
+      <section id="order" class="buy" aria-labelledby="buy-title">
+        <div class="wrap buy-grid">
+          <!-- Filled from the Wix product's own photos by shop.js. -->
+          <div class="buy-gallery" id="buy-gallery">
+            <div class="buy-main"></div>
+          </div>
 
-          <!-- Live product from Wix Stores. Hidden until it loads, so the
-               static cards below stay visible if Wix is unreachable. -->
-          <div class="offers" id="shop" hidden></div>
+          <div class="buy-panel">
+            <div>
+              <p class="buy-eyebrow" id="buy-name">Blaxland Air</p>
+              <h2 class="buy-title" id="buy-title">Choose your lift.</h2>
+              <!-- Price comes from Wix only; hidden until it does. -->
+              <p class="buy-price" id="buy-price" hidden>
+                <strong id="shop-price"></strong><span>per pair · AUD</span>
+              </p>
+            </div>
 
-          <!-- Shown only if the Wix storefront fails to load. The three
-               1/2/3-pair cards that used to live here were a Stripe Payment
-               Links construct; Wix sells one product with variants, so
-               advertising packs that don't exist would be a lie. -->
-          <div id="static-offers">
-            <div class="offer">
-              <span class="offer-label">Just a moment</span>
-              <p class="offer-note">
+            <!-- Live options from Wix Stores. Hidden until they load. -->
+            <div id="shop" hidden></div>
+
+            <!-- Shown only if the Wix storefront fails to load. -->
+            <div id="static-offers" class="buy-fallback">
+              <p>
                 The store is loading. If nothing appears, email
                 <a href="mailto:support@blaxland.co">support@blaxland.co</a> and
                 we'll take your order directly.
               </p>
             </div>
+
+            <p class="fineprint" id="shop-fallback" hidden></p>
+
+            <ul class="buy-assure">
+              <li>
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>
+                Free shipping in Australia on 2+ pairs
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>
+                Tracking emailed when your order ships
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>
+                Secure checkout
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>
+                <span>Questions? <a href="mailto:support@blaxland.co">support@blaxland.co</a></span>
+              </li>
+            </ul>
+
+            <p class="fineprint" style="margin: 0">
+              All prices in Australian dollars and confirmed at checkout, along
+              with any shipping. We ship within Australia only. Lift is the
+              insole's thickness at the heel: 0.6" (15mm), 1.0" (25mm) or
+              1.4" (35mm). It isn't a measurement of how much taller you will
+              stand — see the FAQ.
+            </p>
           </div>
-
-          <p class="fineprint" id="shop-fallback" hidden></p>
-
-          <p class="fineprint" style="margin-top: 1.5rem">
-            All prices in Australian dollars and confirmed at checkout, along
-            with any shipping. We ship within Australia only. Height is the
-            thickness of the insole at the heel, not a measurement of how much
-            taller you will stand — see the FAQ.
-          </p>
         </div>
       </section>
 
@@ -117,9 +139,9 @@
             <div class="card">
               <h3>Heights</h3>
               <p>
-                15mm, 25mm and 35mm. 15mm suits most shoes, including
-                low-cut sneakers. 25mm and 35mm need more room, so they suit
-                boots, high-tops and roomier leather shoes.
+                0.6" (15mm), 1.0" (25mm) and 1.4" (35mm). 0.6" suits most
+                shoes, including low-cut sneakers. 1.0" and 1.4" need more
+                room, so they suit boots, high-tops and roomier leather shoes.
               </p>
             </div>
             <div class="card">
@@ -225,13 +247,13 @@
                   <td class="no">No</td>
                 </tr>
                 <tr>
-                  <td>Hidden inside the shoe</td>
+                  <td>Lift sits inside the shoe</td>
                   <td class="yes">Yes</td>
                   <td class="yes">Yes</td>
                 </tr>
                 <tr>
                   <td>Height</td>
-                  <td>15, 25 or 35mm</td>
+                  <td>0.6", 1.0" or 1.4"</td>
                   <td>Varies by shoe</td>
                 </tr>
                 <tr>
@@ -255,11 +277,12 @@
             <details>
               <summary>How much height will I gain?</summary>
               <div class="answer">
-                Choose 15mm, 25mm or 35mm of heel lift. That figure is the
-                thickness of the insole, not a promise about your standing
-                height — some of the lift is absorbed by your foot and the shoe,
-                and how much varies between people and between shoes. Start with
-                15mm for low-cut shoes and go taller in boots and high-tops.
+                Choose 0.6" (15mm), 1.0" (25mm) or 1.4" (35mm) of heel lift.
+                That figure is the thickness of the insole, not a promise about
+                your standing height — some of the lift is absorbed by your foot
+                and the shoe, and how much varies between people and between
+                shoes. Start with 0.6" for low-cut shoes and go taller in boots
+                and high-tops.
               </div>
             </details>
 
@@ -274,8 +297,8 @@
             <details>
               <summary>Will they fit my shoes?</summary>
               <div class="answer">
-                15mm suits most shoes, including low-cut sneakers. 25mm and
-                35mm need more room, so they suit boots, high-tops and roomier
+                0.6" suits most shoes, including low-cut sneakers. 1.0" and
+                1.4" need more room, so they suit boots, high-tops and roomier
                 leather shoes.
               </div>
             </details>

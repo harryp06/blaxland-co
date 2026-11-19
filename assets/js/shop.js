@@ -20,7 +20,7 @@
 const CFG = window.WIX_CONFIG || {};
 const TOKENS_KEY = "blaxland_wix_tokens";
 
-const state = { client: null, version: null, product: null, selection: {} };
+const state = { client: null, version: null, product: null, selection: {}, qty: 1 };
 
 /* ---------- helpers ---------- */
 
@@ -234,83 +234,237 @@ function normalise(version, p) {
   return out;
 }
 
-/* ---------- rendering, using the page's existing classes ---------- */
+/* ---------- rendering: the buy block ---------- */
+
+// Lift choices arrive from Wix labelled in mm ("15mm"). Customers think in
+// inches, so the card leads with inches and keeps mm underneath — Wix's
+// checkout still shows its own label, and the two must visibly agree.
+const LIFT_INFO = {
+  15: { name: "Everyday", fit: "Sneakers & low-tops", bar: "0.9rem" },
+  25: { name: "Step up", fit: "Boots & high-tops", bar: "1.6rem" },
+  35: { name: "Max", fit: "Roomy boots & high-tops", bar: "2.4rem" },
+};
+
+function liftMm(label) {
+  const m = String(label || "").match(/(\d+(?:\.\d+)?)\s*mm/i);
+  return m ? Number(m[1]) : null;
+}
+
+function inches(mm) {
+  // Unit conversion of a physical length, not a price — 25.4mm to the inch.
+  return `${(mm / 25.4).toFixed(1)}"`;
+}
+
+function sizeLabel(label) {
+  const clean = String(label || "").replace(/-/g, "–");
+  return /^eu\b/i.test(clean) ? clean : `EU ${clean}`;
+}
+
+const isLiftOption = (o) => /lift|height/i.test(o.name);
+
+function optionHtml(o, i) {
+  const name = `opt-${i}`;
+  const attrs = (c) =>
+    `type="radio" name="${name}" value="${text(c.value)}" data-option="${text(
+      o.name
+    )}" data-option-id="${text(o.id || "")}" data-label="${text(c.label)}"`;
+
+  if (isLiftOption(o)) {
+    const cards = o.choices
+      .map((c) => {
+        const mm = liftMm(c.label);
+        const info = (mm && LIFT_INFO[mm]) || {};
+        const big = mm ? inches(mm) : text(c.label);
+        return `
+        <label class="choice">
+          <input ${attrs(c)}>
+          <span class="choice-face">
+            <span class="lift-bar-wrap" aria-hidden="true"><span class="lift-bar" style="--h:${
+              info.bar || "1rem"
+            }"></span></span>
+            <span class="lift-in">${big}</span>
+            ${mm ? `<span class="lift-mm">${mm}mm lift</span>` : ""}
+            ${info.name ? `<span class="lift-name">${info.name}</span>` : ""}
+            ${info.fit ? `<span class="lift-fit">${info.fit}</span>` : ""}
+          </span>
+        </label>`;
+      })
+      .join("");
+    return `
+      <fieldset class="choice-group">
+        <legend>${text(o.name)}</legend>
+        <div class="choice-row">${cards}</div>
+      </fieldset>`;
+  }
+
+  const isSize = /size/i.test(o.name);
+  const pills = o.choices
+    .map(
+      (c) => `
+        <label class="choice pill">
+          <input ${attrs(c)}>
+          <span class="choice-face">${text(isSize ? sizeLabel(c.label) : c.label)}</span>
+        </label>`
+    )
+    .join("");
+  return `
+      <fieldset class="choice-group">
+        <legend>${text(o.name)}</legend>
+        <div class="pill-row">${pills}</div>
+        ${
+          isSize
+            ? '<p class="choice-help">Between sizes? Take the larger band and trim to fit.</p>'
+            : ""
+        }
+      </fieldset>`;
+}
+
+function pairsHtml() {
+  // Wix sells one product, priced per pair. These are quantities, not packs
+  // with their own prices — so no per-pack price is shown or implied here.
+  const rows = [
+    { n: 1, label: "1 pair", note: "Shipping calculated at checkout" },
+    { n: 2, label: "2 pairs", tag: "Free shipping", note: "" },
+    { n: 3, label: "3 pairs", tag: "Free shipping", note: "" },
+  ];
+  return `
+    <fieldset class="choice-group">
+      <legend>Pairs</legend>
+      <div class="pair-list">
+        ${rows
+          .map(
+            (r) => `
+          <label class="choice pair">
+            <input type="radio" name="qty" value="${r.n}"${
+              r.n === state.qty ? " checked" : ""
+            }>
+            <span class="choice-face">
+              <span class="pair-name">${r.label}${
+                r.tag ? `<span class="pair-tag">${r.tag}</span>` : ""
+              }</span>
+              ${r.note ? `<span class="pair-note">${r.note}</span>` : ""}
+            </span>
+          </label>`
+          )
+          .join("")}
+      </div>
+    </fieldset>`;
+}
+
+function renderGallery(prod) {
+  const box = el("#buy-gallery");
+  if (!box || !prod.images.length) return;
+  const imgs = prod.images.slice(0, 6);
+  box.innerHTML = `
+    <div class="buy-main"><img id="buy-main-img" src="${text(imgs[0])}" alt="${text(
+      prod.name
+    )}" width="900" height="900"></div>
+    ${
+      imgs.length > 1
+        ? `<div class="buy-thumbs">${imgs
+            .map(
+              (src, i) =>
+                `<button type="button" class="buy-thumb" data-src="${text(
+                  src
+                )}" aria-label="Show photo ${i + 1}" aria-pressed="${
+                  i === 0
+                }"><img src="${text(src)}" alt="" loading="lazy" width="120" height="120"></button>`
+            )
+            .join("")}</div>`
+        : ""
+    }`;
+  box.querySelectorAll(".buy-thumb").forEach((b) =>
+    b.addEventListener("click", () => {
+      el("#buy-main-img").src = b.dataset.src;
+      box
+        .querySelectorAll(".buy-thumb")
+        .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    })
+  );
+}
+
+function updateSummary() {
+  const node = el("#buy-summary");
+  if (!node) return;
+  const parts = [];
+  for (const o of state.product.options) {
+    const s = state.selection[o.name];
+    if (!s) continue;
+    const mm = isLiftOption(o) ? liftMm(s.label) : null;
+    parts.push(
+      mm ? `${inches(mm)} lift` : /size/i.test(o.name) ? sizeLabel(s.label) : s.label
+    );
+  }
+  parts.push(state.qty === 1 ? "1 pair" : `${state.qty} pairs`);
+  node.textContent = parts.join(" · ");
+}
 
 function renderProduct(prod) {
   const mount = el("#shop");
   if (!mount) return;
 
-  const img = prod.images[0];
+  renderGallery(prod);
 
-  const optionsHtml = prod.options
-    .map(
-      (o) => `
-      <label class="field">
-        <span class="field-label">${text(o.name)}</span>
-        <select data-option="${text(o.name)}" data-option-id="${text(o.id || "")}">
-          <option value="">Choose ${text(o.name.toLowerCase())}</option>
-          ${o.choices
-            .map((c) => `<option value="${text(c.value)}">${text(c.label)}</option>`)
-            .join("")}
-        </select>
-      </label>`
-    )
-    .join("");
+  const nameNode = el("#buy-name");
+  if (nameNode && prod.name) nameNode.textContent = prod.name;
+
+  const priceNode = el("#shop-price");
+  if (priceNode) priceNode.textContent = prod.price || "";
+  const priceRow = el("#buy-price");
+  if (priceRow) priceRow.hidden = !prod.price;
 
   mount.innerHTML = `
-    <div class="offer" data-featured>
-      ${img ? `<img class="shop-img" src="${text(img)}" alt="${text(prod.name)}" loading="lazy" width="600" height="600">` : ""}
-      <span class="offer-label">${text(prod.name)}</span>
-      <span class="offer-price" id="shop-price">${text(prod.price || "")}</span>
-      ${optionsHtml}
-      <label class="field">
-        <span class="field-label">Pairs</span>
-        <select id="qty">
-          ${[1, 2, 3, 4, 5]
-            .map((n) => `<option value="${n}">${n}</option>`)
-            .join("")}
-        </select>
-      </label>
-      <a class="btn btn-block" id="buy" role="button">Add to cart</a>
-      <p class="fineprint" id="shop-msg" role="status" aria-live="polite"></p>
+    <div class="buy-panel">
+      ${prod.options.map(optionHtml).join("")}
+      ${pairsHtml()}
+      <div>
+        <a class="btn btn-block" id="buy" role="button" href="#order">Add to cart</a>
+        <p class="buy-summary" id="buy-summary"></p>
+        <p class="fineprint" id="shop-msg" role="status" aria-live="polite"></p>
+      </div>
     </div>`;
 
-  mount.querySelectorAll("select").forEach((s) =>
-    s.addEventListener("change", () => {
-      const name = s.dataset.option;
-      if (!s.value) {
-        delete state.selection[name];
-      } else {
-        state.selection[name] = {
-          name,
-          optionId: s.dataset.optionId,
-          choiceId: s.value,
-          label: s.selectedOptions[0]?.textContent || s.value,
-        };
-      }
+  mount.querySelectorAll("input[data-option]").forEach((input) =>
+    input.addEventListener("change", () => {
+      if (!input.checked) return;
+      const name = input.dataset.option;
+      state.selection[name] = {
+        name,
+        optionId: input.dataset.optionId,
+        choiceId: input.value,
+        label: input.dataset.label,
+      };
       el("#shop-msg").textContent = "";
       refreshPrice();
+      updateSummary();
+    })
+  );
+
+  mount.querySelectorAll('input[name="qty"]').forEach((input) =>
+    input.addEventListener("change", () => {
+      if (input.checked) state.qty = Number(input.value) || 1;
+      updateSummary();
     })
   );
 
   el("#buy").addEventListener("click", onBuy);
+  updateSummary();
 
-  // Swap: live product in, static placeholder cards out.
+  // Swap: live product in, static placeholder out.
   mount.hidden = false;
   const stat = el("#static-offers");
   if (stat) stat.hidden = true;
 }
 
 function showLoading() {
-  // Hide the static cards BEFORE fetching, not after. They carry hardcoded
-  // prices; if Wix charges something different, flashing the old figure and
-  // then replacing it shows the customer a price that was never real.
+  // Hide the static fallback BEFORE fetching, not after, so a stale message
+  // never flashes over a working store.
   const mount = el("#shop");
   const stat = el("#static-offers");
   if (stat) stat.hidden = true;
   if (mount) {
     mount.hidden = false;
-    mount.innerHTML = `<div class="offer"><span class="offer-label">Loading…</span></div>`;
+    mount.innerHTML = `<p class="fineprint" style="margin:0">Loading…</p>`;
   }
 }
 
@@ -390,7 +544,9 @@ async function onBuy(e) {
     .map((o) => o.name)
     .filter((n) => !state.selection[n]);
   if (missing.length) {
-    msg.textContent = `Choose ${missing.join(" and ")} first.`;
+    msg.textContent = `Choose your ${missing
+      .map((n) => n.toLowerCase())
+      .join(" and ")} first.`;
     return;
   }
 
@@ -418,7 +574,7 @@ async function onBuy(e) {
       options = { variantId };
     }
 
-    const qty = Math.max(1, parseInt(el("#qty")?.value, 10) || 1);
+    const qty = Math.max(1, Math.min(3, state.qty || 1));
 
     await state.client.currentCart.addToCurrentCart({
       lineItems: [
