@@ -40,8 +40,8 @@ window.WIX_CONFIG = {
   // with the preview origin, so checkout can be tested before DNS moves —
   // which means the preview host needs allowlisting too.
   urls: {
-    postFlow: "https://www.blaxland.co",
-    thankYou: "https://www.blaxland.co/thank-you/",
+    postFlow: "https://blaxland.co",
+    thankYou: "https://blaxland.co/thank-you/",
   },
 
   // SDK modules, pinned to exact versions. esm.sh serves the npm packages as
