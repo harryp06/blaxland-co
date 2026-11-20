@@ -885,6 +885,48 @@ footer a:hover {
   color: var(--ink);
 }
 
+.buy-price {
+  flex-wrap: wrap;
+}
+
+#shop-price.is-struck {
+  font-size: 1.2rem;
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.buy-welcome {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.buy-welcome[hidden] {
+  display: none;
+}
+
+.buy-welcome strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.75rem;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.buy-welcome-tag {
+  align-self: center;
+  background: var(--ink);
+  color: var(--lime);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
 .choice-group {
   border: 0;
   margin: 0;

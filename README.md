@@ -44,13 +44,22 @@ is honestly switched off.
 
 ## Prices
 
-Prices appear in `index.html` as display text only. **Stripe is the authority
-on what is actually charged.** If the page and Stripe ever disagree, Stripe is
-right and the HTML is the bug. Nothing here duplicates a price into a second
-file that has to be kept in sync.
+Prices come from **Wix**, live, on every page load (`assets/js/shop.js`).
+Wix is the authority on what is charged; the page prints what Wix sends and
+does no arithmetic on it, with one deliberate exception below. Shipping,
+bundle discounts and coupons are all set in the Wix dashboard, never here.
 
-Current display prices: A$52.95 (1 pair), A$94.95 (2 pairs), A$137.95 (3
-pairs). Shipping A$9.95 on one pair, free on two or more.
+**Welcome discount.** Visitors who sign up through the Omnisend popup (or
+arrive from the welcome email via `?code=BLX15LND`) get the Wix coupon set in
+`wix-config.js > welcome` applied to their cart automatically, and their email
+pre-filled at checkout. For them only, the page shows the full price struck
+through next to the discounted one — computed from `welcome.percent`, which
+must match the Wix coupon exactly. If the coupon is missing or refused, the
+order still goes through at full price.
+
+**Cart.** Every Add to cart empties the visitor's Wix cart first, so an order
+is exactly what they picked on the page (1–3 pairs) and never stacks with an
+older visit.
 
 ## Local preview
 

@@ -22,6 +22,85 @@ const TOKENS_KEY = "blaxland_wix_tokens";
 
 const state = { client: null, version: null, product: null, selection: {}, qty: 1 };
 
+/* ---------- welcome discount (Omnisend signup -> Wix coupon) ----------
+ * The signup itself lives in Omnisend. All this does is remember, on this
+ * browser, that the visitor signed up (and the email they used), so that at
+ * checkout the Wix coupon goes on for them and their email is already filled
+ * in. Nothing here grants a discount Wix doesn't already offer to anyone with
+ * the code — the code is shown openly in the popup and the email. */
+
+const WELCOME = CFG.welcome || null;
+const WELCOME_KEY = "blaxland_welcome";
+
+function readWelcome() {
+  try {
+    return JSON.parse(localStorage.getItem(WELCOME_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function saveWelcome(data) {
+  try {
+    const prev = readWelcome() || {};
+    localStorage.setItem(
+      WELCOME_KEY,
+      JSON.stringify({ ...prev, ...data, at: Date.now() })
+    );
+  } catch {
+    /* private mode etc. — the code can still be typed at checkout */
+  }
+}
+
+const welcomeActive = () => Boolean(WELCOME?.coupon && readWelcome()?.code);
+
+function captureWelcomeFromUrl() {
+  // The welcome email links back with ?code=BLX15LND, so someone who signed up
+  // on their phone and comes back on a laptop still gets it applied.
+  if (!WELCOME?.coupon) return;
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  if (code && code.toUpperCase() === WELCOME.coupon.toUpperCase()) {
+    saveWelcome({ code: true });
+  }
+}
+
+function listenForSignup() {
+  if (!WELCOME?.coupon) return;
+  window.addEventListener("omnisendForms", (e) => {
+    const d = e?.detail || {};
+    const type = d.type || d.eventName;
+    if (type !== "submit") return;
+    if (WELCOME.omnisendFormId && d.form?.id && d.form.id !== WELCOME.omnisendFormId) return;
+    const email = d.formValues?.emailField;
+    saveWelcome({
+      code: true,
+      email: typeof email === "string" && email.includes("@") ? email.trim() : undefined,
+    });
+    renderWelcomePrice();
+  });
+}
+
+function renderWelcomePrice() {
+  // The ONE exception to "no arithmetic on prices": showing the signup price
+  // next to the struck-through full price. It is shown only to someone the
+  // coupon will be applied for, and uses the percentage configured to match
+  // the Wix coupon. Checkout is still where Wix states the real total.
+  const base = el("#shop-price");
+  const note = el("#buy-welcome");
+  if (!base || !note) return;
+  const amount = Number(String(base.textContent).replace(/[^0-9.]/g, ""));
+  const on = welcomeActive() && WELCOME.percent > 0 && amount > 0;
+  base.classList.toggle("is-struck", on);
+  note.hidden = !on;
+  if (!on) return;
+  const cents = Math.round(amount * (100 - WELCOME.percent));
+  const discounted = money({ amount: (cents / 100).toFixed(2) });
+  note.innerHTML = `<strong>${text(discounted || "")}</strong><span class="buy-welcome-tag">${
+    WELCOME.percent
+  }% welcome discount applied at checkout</span>`;
+}
+
 /* ---------- helpers ---------- */
 
 const el = (sel, root = document) => root.querySelector(sel);
@@ -412,6 +491,7 @@ function renderProduct(prod) {
   if (priceNode) priceNode.textContent = prod.price || "";
   const priceRow = el("#buy-price");
   if (priceRow) priceRow.hidden = !prod.price;
+  renderWelcomePrice();
 
   mount.innerHTML = `
     <div class="buy-panel">
@@ -528,10 +608,12 @@ function refreshPrice() {
   const chosen = Object.keys(state.selection).length;
   if (chosen < state.product.options.length) {
     node.textContent = state.product.price || "";
+    renderWelcomePrice();
     return;
   }
   const v = matchVariant(state.product, state.selection);
   node.textContent = (v && variantPrice(v)) || state.product.price || "";
+  renderWelcomePrice();
 }
 
 async function onBuy(e) {
@@ -574,7 +656,18 @@ async function onBuy(e) {
       options = { variantId };
     }
 
+    // Three pairs is the most one order can hold.
     const qty = Math.max(1, Math.min(3, state.qty || 1));
+
+    // Start from an empty cart every time. Wix keeps a visitor's cart between
+    // visits, so without this, coming back and pressing Add to cart again
+    // would stack a second lot on top of the first (3 + 3 = 6 pairs) and drag
+    // old picks into checkout. What they chose on this page is what they buy.
+    try {
+      await state.client.currentCart.deleteCurrentCart();
+    } catch {
+      /* no cart yet — expected on a first visit */
+    }
 
     await state.client.currentCart.addToCurrentCart({
       lineItems: [
@@ -589,9 +682,27 @@ async function onBuy(e) {
       ],
     });
 
+    // Signed up for the welcome discount? Put the coupon on. If Wix refuses
+    // it (coupon missing, already used by this customer), carry on without
+    // it — a full-price checkout beats a failed one, and the code can still
+    // be typed at checkout.
+    if (welcomeActive()) {
+      try {
+        await state.client.currentCart.updateCurrentCart({
+          couponCode: WELCOME.coupon,
+        });
+      } catch (err) {
+        console.warn("[blaxland] welcome coupon not applied:", err?.details?.applicationError?.code || err);
+      }
+    }
+
+    // Pre-fill the email they gave the popup, so checkout opens one field
+    // shorter. Only ever the address typed on this browser.
+    const email = readWelcome()?.email;
     const { checkoutId } =
       await state.client.currentCart.createCheckoutFromCurrentCart({
         channelType: state.ChannelType?.WEB || "WEB",
+        ...(email ? { email } : {}),
       });
 
     const urls = checkoutUrls();
@@ -641,6 +752,11 @@ async function onBuy(e) {
 /* ---------- boot ---------- */
 
 (async function init() {
+  // Before anything else, so a signup that happens while the store is still
+  // loading is not missed.
+  captureWelcomeFromUrl();
+  listenForSignup();
+
   if (!el("#shop")) return;
 
   // Nothing configured yet: leave the page exactly as authored, say so in the

@@ -82,7 +82,9 @@
               <h2 class="buy-title" id="buy-title">Choose your lift.</h2>
               <!-- Price comes from Wix only; hidden until it does. -->
               <p class="buy-price" id="buy-price" hidden>
-                <strong id="shop-price"></strong><span>per pair · AUD</span>
+                <strong id="shop-price"></strong>
+                <span id="buy-welcome" class="buy-welcome" hidden></span>
+                <span>per pair · AUD</span>
               </p>
             </div>
 
@@ -396,5 +398,13 @@
     <script src="assets/js/site.js"></script>
     <script src="assets/js/wix-config.js"></script>
     <script type="module" src="assets/js/shop.js"></script>
+    <!-- Omnisend: signup popup, form events and on-site tracking. Brand ID is
+         public (it ships to every visitor's browser by design). -->
+    <script type="text/javascript">
+      window.omnisend = window.omnisend || [];
+      omnisend.push(["brandID", "6ae2e3609a7bffffbe02c03d"]);
+      omnisend.push(["track", "$pageViewed"]);
+      !function(){var e=document.createElement("script");e.type="text/javascript",e.async=!0,e.src="https://omnisnippet1.com/inshop/launcher-v2.js";var t=document.getElementsByTagName("script")[0];t.parentNode.insertBefore(e,t)}();
+    </script>
   </body>
 </html>

@@ -44,6 +44,19 @@ window.WIX_CONFIG = {
     thankYou: "https://blaxland.co/thank-you/",
   },
 
+  // Email-signup welcome discount. The Omnisend popup promises it is applied
+  // automatically, so shop.js applies this Wix coupon to the cart when the
+  // visitor has signed up on this browser (or arrived from the welcome email
+  // via ?code=BLX15LND). The coupon itself MUST exist in Wix: Marketing >
+  // Coupons, 15% off, one use per customer. `percent` is display-only and must
+  // match that coupon exactly — it is the one place the page shows a price Wix
+  // didn't send, so if the coupon changes, change this in the same sitting.
+  welcome: {
+    coupon: "BLX15LND",
+    percent: 15,
+    omnisendFormId: "6ae2f205cfd2c23d306ef87b",
+  },
+
   // SDK modules, pinned to exact versions. esm.sh serves the npm packages as
   // browser ES modules, which is what lets this work with no build step.
   // Pinned deliberately: an unpinned @latest would let a third party change
