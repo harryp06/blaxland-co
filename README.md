@@ -58,8 +58,8 @@ must match the Wix coupon exactly. If the coupon is missing or refused, the
 order still goes through at full price.
 
 **Cart.** Every Add to cart empties the visitor's Wix cart first, so an order
-is exactly what they picked on the page (1–3 pairs) and never stacks with an
-older visit.
+is exactly what they picked on the page (1, 2, 3 or 5 pairs) and never stacks
+with an older visit.
 
 ## Local preview
 

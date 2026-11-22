@@ -1169,3 +1169,72 @@ footer a:hover {
     font-size: 1.6rem;
   }
 }
+
+/* ---------- way back to the product ----------
+   A lime pill pinned to the bottom of the screen. On the home page site.js
+   shows it whenever neither the hero nor the product section is in view; on
+   the FAQ page it is always there. */
+
+.jump-to-order {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3rem;
+  padding: 0 1.4rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px hsl(0 0% 0% / 0.45);
+}
+
+.jump-to-order[hidden] {
+  display: none;
+}
+
+.jump-to-order:hover {
+  color: var(--ink);
+  filter: brightness(1.05);
+}
+
+.jump-to-order:focus-visible {
+  outline: 3px solid var(--fg);
+  outline-offset: 3px;
+}
+
+/* Keep the pinned button from sitting on top of the footer's last line. */
+body:has(.jump-to-order) {
+  padding-bottom: 5rem;
+}
+
+/* ---------- FAQ page ---------- */
+
+.faq-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.faq-back:hover {
+  color: var(--lime);
+}
+
+.faq-title {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+}

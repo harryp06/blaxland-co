@@ -41,6 +41,28 @@
     }
   });
 
+  // "Choose your lift" pill: on the home page, show it whenever neither the
+  // hero (which has its own button) nor the product section is on screen, so
+  // from anywhere further down there is always one tap back to buying.
+  var jump = document.querySelector(".jump-to-order:not(.is-fixed)");
+  var hero = document.querySelector(".hero");
+  var order = document.getElementById("order");
+  if (jump && order && "IntersectionObserver" in window) {
+    var visible = new Set();
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) visible.add(e.target);
+          else visible.delete(e.target);
+        });
+        jump.hidden = visible.size > 0;
+      },
+      { threshold: 0.15 }
+    );
+    io.observe(order);
+    if (hero) io.observe(hero);
+  }
+
   // Current year in the footer.
   var yr = document.querySelector("[data-year]");
   if (yr) yr.textContent = new Date().getFullYear();

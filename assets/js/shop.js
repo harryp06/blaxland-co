@@ -319,8 +319,8 @@ function normalise(version, p) {
 // inches, so the card leads with inches and keeps mm underneath — Wix's
 // checkout still shows its own label, and the two must visibly agree.
 const LIFT_INFO = {
-  15: { name: "Everyday", fit: "Sneakers & low-tops", bar: "0.9rem" },
-  25: { name: "Step up", fit: "Boots & high-tops", bar: "1.6rem" },
+  15: { name: "Daily", fit: "Sneakers & low-tops", bar: "0.9rem" },
+  25: { name: "Air", fit: "Boots & high-tops", bar: "1.6rem" },
   35: { name: "Max", fit: "Roomy boots & high-tops", bar: "2.4rem" },
 };
 
@@ -334,9 +334,25 @@ function inches(mm) {
   return `${(mm / 25.4).toFixed(1)}"`;
 }
 
+// Wix holds sizes as EU bands ("41-42"). Australians know their AU size, so
+// the page shows AU men's sizes. AU men's = UK sizing; bands are made
+// continuous so every whole and half size from 2.5 to 10 lands in exactly one
+// band, rounding up (the insole trims down, it can't stretch). Brands' charts
+// differ by up to half a size — check against the sample's length.
+const EU_TO_AU = {
+  "35-36": "2.5–3.5",
+  "37-38": "4–5.5",
+  "39-40": "6–6.5",
+  "41-42": "7–8.5",
+  "43-44": "9–10",
+};
+
 function sizeLabel(label) {
-  const clean = String(label || "").replace(/-/g, "–");
-  return /^eu\b/i.test(clean) ? clean : `EU ${clean}`;
+  const raw = String(label || "").trim();
+  if (/\bau\b/i.test(raw)) return raw.replace(/-/g, "–"); // already AU in Wix
+  const key = raw.replace(/^eu\s*/i, "").replace(/[–—]/g, "-").replace(/\s+/g, "");
+  if (EU_TO_AU[key]) return `AU ${EU_TO_AU[key]}`;
+  return `EU ${raw.replace(/-/g, "–")}`;
 }
 
 const isLiftOption = (o) => /lift|height/i.test(o.name);
@@ -388,11 +404,11 @@ function optionHtml(o, i) {
     .join("");
   return `
       <fieldset class="choice-group">
-        <legend>${text(o.name)}</legend>
+        <legend>${isSize ? "Size (AU men's)" : text(o.name)}</legend>
         <div class="pill-row">${pills}</div>
         ${
           isSize
-            ? '<p class="choice-help">Between sizes? Take the larger band and trim to fit.</p>'
+            ? "<p class=\"choice-help\">Between sizes? Take the larger one and trim to fit. Wear women's sizes? Go down about 2.</p>"
             : ""
         }
       </fieldset>`;
@@ -401,10 +417,13 @@ function optionHtml(o, i) {
 function pairsHtml() {
   // Wix sells one product, priced per pair. These are quantities, not packs
   // with their own prices — so no per-pack price is shown or implied here.
+  // "Our pick" rather than "Most popular": that is a claim about what
+  // customers buy, and can only go up once sales show it.
   const rows = [
-    { n: 1, label: "1 pair", note: "Shipping calculated at checkout" },
-    { n: 2, label: "2 pairs", tag: "Free shipping", note: "" },
-    { n: 3, label: "3 pairs", tag: "Free shipping", note: "" },
+    { n: 1, label: "1 pair" },
+    { n: 2, label: "2 pairs", tag: "Our pick" },
+    { n: 3, label: "3 pairs" },
+    { n: 5, label: "5 pairs" },
   ];
   return `
     <fieldset class="choice-group">
@@ -498,7 +517,7 @@ function renderProduct(prod) {
       ${prod.options.map(optionHtml).join("")}
       ${pairsHtml()}
       <div>
-        <a class="btn btn-block" id="buy" role="button" href="#order">Add to cart</a>
+        <a class="btn btn-block" id="buy" role="button" href="#order">Checkout</a>
         <p class="buy-summary" id="buy-summary"></p>
         <p class="fineprint" id="shop-msg" role="status" aria-live="polite"></p>
       </div>
@@ -656,12 +675,12 @@ async function onBuy(e) {
       options = { variantId };
     }
 
-    // Three pairs is the most one order can hold.
-    const qty = Math.max(1, Math.min(3, state.qty || 1));
+    // Only the pack sizes on the page: 1, 2, 3 or 5 pairs.
+    const qty = [1, 2, 3, 5].includes(state.qty) ? state.qty : 1;
 
     // Start from an empty cart every time. Wix keeps a visitor's cart between
     // visits, so without this, coming back and pressing Add to cart again
-    // would stack a second lot on top of the first (3 + 3 = 6 pairs) and drag
+    // would stack a second lot on top of the first (5 + 5 = 10 pairs) and drag
     // old picks into checkout. What they chose on this page is what they buy.
     try {
       await state.client.currentCart.deleteCurrentCart();
