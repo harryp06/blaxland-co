@@ -29,18 +29,19 @@
   </head>
 
   <body>
+    <div class="home-view" id="home">
     <div class="announce">Free shipping in Australia on 2+ pairs</div>
 
     <header class="nav">
       <div class="wrap nav-inner">
         <a class="wordmark" href="index.html">BLAXLAND AIR</a>
         <ul class="nav-links">
-          <li><a href="#order">Order</a></li>
+          <li><a href="#lift">Order</a></li>
           <li><a href="#how">How it works</a></li>
           <li><a href="faq.html">FAQ</a></li>
           <li><a href="policies.html">Shipping &amp; returns</a></li>
         </ul>
-        <a class="btn btn-ghost" href="#order">Order</a>
+        <a class="btn btn-ghost" href="#lift">Order</a>
       </div>
     </header>
 
@@ -48,12 +49,12 @@
       <!-- HERO -->
       <section class="hero wrap">
         <p class="eyebrow">Height insoles</p>
-        <h1>Taller,<br /><em>by choice.</em></h1>
+        <h1>Taller you,<br /><em>by choice.</em></h1>
         <p class="lede">
           Up to 1.4" of pure lift, inside the shoes that you already wear.
         </p>
         <div class="hero-actions">
-          <a class="btn" href="#order">Choose your lift</a>
+          <a class="btn" href="#lift">Choose your lift</a>
         </div>
       </section>
 
@@ -65,70 +66,6 @@
           </span>
         </div>
       </div>
-
-      <!-- ORDER / PRODUCT ------------------------------------------------ -->
-      <section id="order" class="buy" aria-labelledby="buy-title">
-        <div class="wrap buy-grid">
-          <!-- Filled from the Wix product's own photos by shop.js. -->
-          <div class="buy-gallery" id="buy-gallery">
-            <div class="buy-main"></div>
-          </div>
-
-          <div class="buy-panel">
-            <div>
-              <p class="buy-eyebrow" id="buy-name">Blaxland Air</p>
-              <h2 class="buy-title" id="buy-title">Choose your lift.</h2>
-              <!-- Price comes from Wix only; hidden until it does. -->
-              <p class="buy-price" id="buy-price" hidden>
-                <strong id="shop-price"></strong>
-                <span id="buy-welcome" class="buy-welcome" hidden></span>
-                <span>per pair · AUD</span>
-              </p>
-            </div>
-
-            <!-- Live options from Wix Stores. Hidden until they load. -->
-            <div id="shop" hidden></div>
-
-            <!-- Shown only if the Wix storefront fails to load. -->
-            <div id="static-offers" class="buy-fallback">
-              <p>
-                The store is loading. If nothing appears, email
-                <a href="mailto:support@blaxland.co">support@blaxland.co</a> and
-                we'll take your order directly.
-              </p>
-            </div>
-
-            <p class="fineprint" id="shop-fallback" hidden></p>
-
-            <ul class="buy-assure">
-              <li>
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>
-                Free shipping in Australia on 2+ pairs
-              </li>
-              <li>
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>
-                Tracking emailed when your order ships
-              </li>
-              <li>
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>
-                Secure checkout
-              </li>
-              <li>
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>
-                <span>Questions? <a href="mailto:support@blaxland.co">support@blaxland.co</a></span>
-              </li>
-            </ul>
-
-            <p class="fineprint" style="margin: 0">
-              All prices in Australian dollars and confirmed at checkout, along
-              with any shipping. We ship within Australia only. Lift is the
-              insole's thickness at the heel: 0.6" (15mm), 1.0" (25mm) or
-              1.4" (35mm). It isn't a measurement of how much taller you will
-              stand — see the FAQ.
-            </p>
-          </div>
-        </div>
-      </section>
 
       <!-- SIZING ---------------------------------------------------------- -->
       <section>
@@ -225,7 +162,7 @@
 
     <!-- Always one tap back to the product. Shown by site.js whenever neither
          the hero nor the product section is on screen. -->
-    <a class="jump-to-order" href="#order" hidden>
+    <a class="jump-to-order" href="#lift" hidden>
       <span>Choose your lift</span>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" stroke="currentColor" stroke-width="2"></path></svg>
     </a>
@@ -243,7 +180,7 @@
           <div>
             <h4>Shop</h4>
             <ul>
-              <li><a href="#order">Order</a></li>
+              <li><a href="#lift">Order</a></li>
               <li><a href="#how">How it works</a></li>
               <li><a href="faq.html">FAQ</a></li>
             </ul>
@@ -265,6 +202,63 @@
         </p>
       </div>
     </footer>
+    </div>
+
+    <!-- PRODUCT FLOW ------------------------------------------------------
+         Its own screen. Slides in from the right over the home page whenever
+         a "Choose your lift" link is tapped (site.js routes it), then walks
+         through one decision at a time (shop.js): lift, size, pairs, checkout.
+         Price is only shown on the last step. -->
+    <section
+      class="flow"
+      id="order"
+      aria-labelledby="flow-heading"
+      aria-hidden="true"
+      inert
+    >
+      <h2 class="sr-only" id="flow-heading">Choose your lift</h2>
+      <header class="flow-bar">
+        <button type="button" class="flow-back" id="flow-back" aria-label="Back">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M18 11H4m6-6-6 6 6 6" stroke="currentColor" stroke-width="2"></path></svg>
+        </button>
+        <span class="flow-brand">BLAXLAND AIR</span>
+        <span class="flow-count" id="flow-count">Step 1 of 4</span>
+      </header>
+      <ol class="flow-progress" id="flow-progress" aria-hidden="true">
+        <li class="is-current"><span>Lift</span></li>
+        <li><span>Size</span></li>
+        <li><span>Pairs</span></li>
+        <li><span>Checkout</span></li>
+      </ol>
+
+      <div class="flow-body" id="flow-body">
+        <div class="flow-inner">
+          <!-- Steps are built from the live Wix product by shop.js. -->
+          <div id="shop" hidden></div>
+
+          <!-- Shown only if the Wix storefront fails to load. -->
+          <div id="static-offers" class="flow-fallback">
+            <p>
+              The store is loading. If nothing appears, email
+              <a href="mailto:support@blaxland.co">support@blaxland.co</a> and
+              we'll take your order directly.
+            </p>
+          </div>
+          <p class="fineprint" id="shop-fallback" hidden></p>
+        </div>
+      </div>
+
+      <div class="flow-actions" id="flow-actions">
+        <div class="flow-inner">
+          <button type="button" class="btn btn-block" id="flow-next" disabled>
+            Next: size
+          </button>
+          <a class="btn btn-block" id="buy" role="button" href="#checkout" hidden>Checkout</a>
+          <p class="fineprint flow-msg" id="shop-msg" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
 
     <script src="assets/js/site.js"></script>
     <script src="assets/js/wix-config.js"></script>

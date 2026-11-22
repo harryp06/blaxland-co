@@ -50,6 +50,9 @@
   --paper-2: hsl(43 15% 86%);
   --ink-soft: hsl(40 6% 28%);
   --line: hsl(40 6% 50%);
+  /* Option edges on the dark product screen: 3:1 against --surface. */
+  --line-dark: hsl(0 0% 42%);
+  --ease-slide: cubic-bezier(0.22, 0.61, 0.36, 1);
   --wrap: 68rem;
 }
 
@@ -254,6 +257,14 @@ section:first-of-type {
 .hero {
   padding-block: clamp(3.5rem, 12vw, 7rem);
   text-align: center;
+  /* Fills the first screen: phone height minus the announcement bar and the
+     header, so the opening view is all black, headline in the middle. */
+  min-height: calc(100vh - 6.25rem);
+  min-height: calc(100svh - 6.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero h1 {
@@ -762,414 +773,6 @@ footer a:hover {
   }
 }
 
-/* ---------- buy block (product page) ----------
-   Light "paper" panel so the moment of purchase is the brightest thing on a
-   dark page. Same lime rule applies: the button is lime with ink text AND an
-   ink border, because lime against paper has no visible edge at all. */
-
-.buy {
-  background: var(--paper);
-  color: var(--ink);
-  border-top: 0;
-}
-
-.buy a {
-  color: var(--ink);
-}
-
-.buy :focus-visible {
-  outline-color: var(--ink);
-}
-
-.buy-grid {
-  display: grid;
-  gap: 2.5rem;
-  align-items: start;
-}
-
-@media (min-width: 52rem) {
-  .buy-grid {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    gap: 3.5rem;
-  }
-  /* Clears the sticky header (min-height 3.75rem) with room to spare. */
-  .buy-gallery {
-    position: sticky;
-    top: 5.25rem;
-  }
-}
-
-.buy-main {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: var(--radius);
-  background: var(--paper-2);
-  overflow: hidden;
-}
-
-.buy-main img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.buy-thumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 0.6rem;
-}
-
-.buy-thumb {
-  width: 4.5rem;
-  height: 4.5rem;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper-2);
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.buy-thumb[aria-pressed="true"] {
-  border: 2px solid var(--ink);
-}
-
-.buy-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.buy-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
-  min-width: 0;
-}
-
-.buy-eyebrow {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin: 0 0 0.75rem;
-}
-
-.buy-title {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(2.75rem, 7vw, 4.5rem);
-  line-height: 0.95;
-  letter-spacing: 0;
-  text-transform: uppercase;
-  color: var(--ink);
-  margin: 0;
-}
-
-.buy-price {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin: 0.9rem 0 0;
-  font-size: 0.95rem;
-  color: var(--ink-soft);
-}
-
-.buy-price strong {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.75rem;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-}
-
-.buy-price {
-  flex-wrap: wrap;
-}
-
-#shop-price.is-struck {
-  font-size: 1.2rem;
-  color: var(--ink-soft);
-  text-decoration: line-through;
-  text-decoration-thickness: 2px;
-}
-
-.buy-welcome {
-  display: inline-flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.buy-welcome[hidden] {
-  display: none;
-}
-
-.buy-welcome strong {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.75rem;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-}
-
-.buy-welcome-tag {
-  align-self: center;
-  background: var(--ink);
-  color: var(--lime);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.5rem;
-  border-radius: 2px;
-}
-
-.choice-group {
-  border: 0;
-  margin: 0;
-  padding: 0;
-  min-width: 0;
-}
-
-.choice-group legend {
-  padding: 0;
-  margin-bottom: 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-
-.choice-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
-}
-
-.pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.pair-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.choice {
-  position: relative;
-  display: block;
-}
-
-/* Real radio inputs, visually hidden but still focusable and announced. */
-.choice input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  margin: 0;
-}
-
-.choice-face {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  height: 100%;
-  padding: 0.9rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.choice-face:hover {
-  border-color: var(--ink);
-}
-
-.choice input:checked + .choice-face {
-  border: 2px solid var(--ink);
-  padding: calc(0.9rem - 1px);
-  background: #fff;
-}
-
-.choice input:focus-visible + .choice-face {
-  outline: 3px solid var(--ink);
-  outline-offset: 2px;
-}
-
-.lift-bar-wrap {
-  display: flex;
-  align-items: flex-end;
-  height: 2.75rem;
-  margin-bottom: 0.25rem;
-}
-
-.lift-bar {
-  display: block;
-  width: 1.6rem;
-  height: var(--h, 1rem);
-  background: var(--ink);
-  border-top: 4px solid var(--lime);
-}
-
-.lift-in {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.lift-mm {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-
-.lift-name {
-  margin-top: 0.25rem;
-  font-size: 0.92rem;
-  font-weight: 700;
-}
-
-.lift-fit {
-  font-size: 0.8rem;
-  line-height: 1.35;
-  color: var(--ink-soft);
-}
-
-.pill .choice-face {
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0 1rem;
-  border-radius: 999px;
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-
-.pill input:checked + .choice-face {
-  padding: 0 calc(1rem - 1px);
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.pair .choice-face {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.15rem;
-}
-
-.pair input:checked + .choice-face {
-  padding: calc(1rem - 1px) calc(1.15rem - 1px);
-}
-
-.pair-name {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.pair-note {
-  font-size: 0.82rem;
-  color: var(--ink-soft);
-  text-align: right;
-}
-
-.pair-tag {
-  background: var(--ink);
-  color: var(--lime);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.5rem;
-  border-radius: 2px;
-}
-
-.choice-help {
-  margin: 0.6rem 0 0;
-  font-size: 0.82rem;
-  color: var(--ink-soft);
-}
-
-.buy .btn {
-  border: 2px solid var(--ink);
-  padding: 1.15rem 1.6rem;
-  font-size: 0.95rem;
-}
-
-.buy-summary {
-  margin: 0.6rem 0 0;
-  text-align: center;
-  font-size: 0.82rem;
-  color: var(--ink-soft);
-}
-
-.buy-summary:empty {
-  display: none;
-}
-
-.buy-assure {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  font-size: 0.92rem;
-  font-weight: 400;
-}
-
-.buy-assure li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-}
-
-.buy-assure svg {
-  flex: none;
-  margin-top: 0.2rem;
-}
-
-.buy .fineprint,
-.buy-fallback {
-  color: var(--ink-soft);
-}
-
-.buy-fallback p {
-  margin: 0;
-}
-
-.buy #shop-msg {
-  color: var(--ink);
-}
-
-@media (max-width: 30rem) {
-  .choice-row {
-    gap: 0.45rem;
-  }
-  .choice-face {
-    padding: 0.75rem 0.6rem;
-  }
-  .choice input:checked + .choice-face {
-    padding: calc(0.75rem - 1px) calc(0.6rem - 1px);
-  }
-  .lift-in {
-    font-size: 1.6rem;
-  }
-}
-
 /* ---------- way back to the product ----------
    A lime pill pinned to the bottom of the screen. On the home page site.js
    shows it whenever neither the hero nor the product section is in view; on
@@ -1237,4 +840,632 @@ body:has(.jump-to-order) {
 
 .faq-title {
   font-size: clamp(2.25rem, 5vw, 3.5rem);
+}
+
+/* ---------- home <-> product screen ----------
+   The product screen (.flow) sits off to the right. Opening it slides it in
+   while the home page drifts left and dims, so the direction of travel is
+   obvious; closing plays it in reverse. site.js toggles html.shop-open. */
+
+.home-view {
+  transition: transform 0.5s var(--ease-slide), opacity 0.5s var(--ease-slide);
+}
+
+html.shop-open,
+html.shop-open body {
+  overflow: hidden;
+}
+
+html.shop-open .home-view {
+  transform: translateX(-28%);
+  opacity: 0.35;
+}
+
+html.shop-open .jump-to-order {
+  display: none;
+}
+
+.flow {
+  position: fixed;
+  inset: 0;
+  padding: 0; /* not the page sections' vertical rhythm */
+  border-top: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  transform: translateX(100%);
+  visibility: hidden;
+  box-shadow: -24px 0 48px hsl(0 0% 0% / 0.55);
+  transition: transform 0.5s var(--ease-slide), visibility 0s linear 0.5s;
+}
+
+html.shop-open .flow {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.5s var(--ease-slide), visibility 0s;
+}
+
+html.no-anim .flow,
+html.no-anim .home-view {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow,
+  .home-view {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.flow-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  padding: env(safe-area-inset-top) 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.flow-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.flow-back:hover {
+  background: var(--muted-bg);
+}
+
+.flow-brand {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.flow-count {
+  min-width: 44px;
+  padding-right: 0.5rem;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.flow-progress {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0.85rem 1rem 0;
+  box-sizing: border-box;
+}
+
+.flow-progress li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.flow-progress li::before {
+  content: "";
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background 0.3s var(--ease-slide);
+}
+
+.flow-progress li.is-done::before,
+.flow-progress li.is-current::before {
+  background: var(--lime);
+}
+
+.flow-progress li.is-current {
+  color: var(--fg);
+}
+
+.flow-body {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.flow-inner {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.flow-actions {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.flow-actions[hidden] {
+  display: none;
+}
+
+.flow-actions .flow-inner {
+  padding-block: 0.75rem;
+}
+
+.flow-actions .btn {
+  min-height: 3.25rem;
+  font-size: 0.95rem;
+}
+
+.flow-actions .btn[hidden] {
+  display: none;
+}
+
+.flow-actions .btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.flow-msg {
+  margin: 0.6rem 0 0;
+}
+
+.flow-msg:empty {
+  display: none;
+}
+
+.flow-fallback {
+  color: var(--muted);
+}
+
+.flow-photo {
+  aspect-ratio: 4 / 3;
+  max-height: 36vh; /* keep the lift options on the first screen */
+  width: 100%;
+  margin-bottom: 1.25rem;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.flow-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-height: 720px) {
+  .flow-photo {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+.flow-title {
+  margin: 0 0 1.1rem;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  outline: none;
+}
+
+.flow .choice-group {
+  border: 0;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  min-width: 0;
+}
+
+.flow .choice-group legend {
+  padding: 0;
+  margin-bottom: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.choice-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pair-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.choice {
+  position: relative;
+  display: block;
+}
+
+/* Real radio inputs, visually hidden but still focusable and announced. */
+.choice input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+
+.choice-face {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  height: 100%;
+  padding: 0.9rem;
+  border: 1px solid var(--line-dark);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.choice-face:hover {
+  border-color: var(--fg);
+}
+
+.choice input:checked + .choice-face {
+  border-color: var(--lime);
+  box-shadow: inset 0 0 0 1px var(--lime);
+  background: hsl(70 100% 50% / 0.07);
+}
+
+.choice input:focus-visible + .choice-face {
+  outline: 3px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.lift-bar-wrap {
+  display: flex;
+  align-items: flex-end;
+  height: 2.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.lift-bar {
+  display: block;
+  width: 1.5rem;
+  height: var(--h, 1rem);
+  border-radius: 2px 2px 0 0;
+  background: var(--muted);
+  transition: background 0.2s;
+}
+
+.choice input:checked + .choice-face .lift-bar {
+  background: var(--lime);
+}
+
+.lift-in {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.lift-name {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.lift-fit {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.pill .choice-face {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.pill input:checked + .choice-face {
+  background: var(--lime);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.pair .choice-face {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.15rem;
+}
+
+.pair-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.pair-note {
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.pair-tag {
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
+.choice-help {
+  margin: 0.7rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+@media (max-width: 30rem) {
+  .choice-row {
+    gap: 0.45rem;
+  }
+  .choice-row .choice-face {
+    padding: 0.75rem 0.6rem;
+  }
+  .lift-in {
+    font-size: 1.65rem;
+  }
+}
+
+/* Optional height preview on the lift step. */
+.height-calc {
+  margin-top: 0.25rem;
+  padding: 1rem;
+  border: 1px dashed var(--line-dark);
+  border-radius: 6px;
+}
+
+.height-q {
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+}
+
+.height-q span {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.height-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+/* 16px text so iPhones don't zoom the page when a select is tapped. */
+.height-inputs select {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--line-dark);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.height-result {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.height-result[hidden] {
+  display: none;
+}
+
+.height-result div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.6rem;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.height-result span {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.height-result strong {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.height-result .is-lift {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.height-result .is-lift span {
+  color: var(--ink);
+}
+
+.height-note {
+  margin: 0.75rem 0 0;
+}
+
+/* Review step. */
+.review {
+  margin: 0 0 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.review div {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.review dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.review dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.flow-change {
+  min-height: 44px;
+  padding: 0 0.25rem;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.buy-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  color: var(--muted);
+}
+
+#shop-price {
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  font-weight: 400;
+  color: var(--fg);
+}
+
+#shop-price.is-struck {
+  font-size: 1.25rem;
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.buy-welcome {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.buy-welcome[hidden] {
+  display: none;
+}
+
+.buy-welcome strong {
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  font-weight: 400;
+  color: var(--fg);
+}
+
+.buy-welcome-tag {
+  align-self: center;
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
+.buy-unit {
+  font-size: 0.9rem;
+}
+
+.review-ship {
+  margin: 0 0 1.25rem;
+  font-weight: 500;
+}
+
+.buy-assure {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  font-size: 0.92rem;
+}
+
+.buy-assure li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.buy-assure svg {
+  flex: none;
+  margin-top: 0.2rem;
+  color: var(--lime);
 }

@@ -40,6 +40,11 @@ PAIRS = [
     ("buy: thumb edge",      "--line",    "--paper-2", 1.5),
     ("buy: lime tag on ink", "--lime",    "--ink",     4.5),
     ("buy: paper on ink pill","--paper",  "--ink",     4.5),
+    # Product screen (dark)
+    ("flow: option edge",    "--line-dark","--surface", 3.0),
+    ("flow: option edge/bg", "--line-dark","--bg",      3.0),
+    ("flow: muted on surface","--muted",  "--surface", 4.5),
+    ("flow: ink on lime",    "--ink",     "--lime",    4.5),
 ]
 
 # Combinations that must NEVER ship. Checked in reverse: these are expected to

@@ -61,6 +61,16 @@ order still goes through at full price.
 is exactly what they picked on the page (1, 2, 3 or 5 pairs) and never stacks
 with an older visit.
 
+## Product screen
+
+The product is not part of the home page's scroll. Every "Choose your lift"
+link opens it as its own screen that slides in from the right (`site.js`
+routes on the address bar: `#lift`, `#size`, `#pairs`, `#checkout`; old
+`#order` links still work). `shop.js` builds one step per decision from the
+live Wix product — lift, size, pairs, then a review with the price and the
+Checkout button. Back (arrow, phone gesture or browser) steps back one screen
+and never leaves the site.
+
 ## Local preview
 
 ```sh

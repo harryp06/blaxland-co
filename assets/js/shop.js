@@ -313,11 +313,21 @@ function normalise(version, p) {
   return out;
 }
 
-/* ---------- rendering: the buy block ---------- */
+/* ---------- the product flow: one decision per step ----------
+ * Lift -> Size -> Pairs -> Checkout. Each step is its own panel; moving
+ * between them slides in the direction of travel. The address bar holds the
+ * step (#lift, #size, #pairs, #checkout) via site.js's router, so the back
+ * gesture walks back a step. Price appears on the last step only. */
+
+const STEPS = ["lift", "size", "pairs", "checkout"];
+const NEXT_LABEL = ["Next: size", "Next: pairs", "Review order"];
+const flow = { step: 0, liftOpt: null, sizeOpt: null, otherOpts: [] };
+
+const prefersReducedMotion = () =>
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 // Lift choices arrive from Wix labelled in mm ("15mm"). Customers think in
-// inches, so the card leads with inches and keeps mm underneath — Wix's
-// checkout still shows its own label, and the two must visibly agree.
+// inches, so the card leads with inches and keeps mm underneath.
 const LIFT_INFO = {
   15: { name: "Daily", fit: "Sneakers & low-tops", bar: "0.9rem" },
   25: { name: "Air", fit: "Boots & high-tops", bar: "1.6rem" },
@@ -356,172 +366,363 @@ function sizeLabel(label) {
 }
 
 const isLiftOption = (o) => /lift|height/i.test(o.name);
+const isSizeOption = (o) => /size/i.test(o.name);
 
-function optionHtml(o, i) {
-  const name = `opt-${i}`;
-  const attrs = (c) =>
-    `type="radio" name="${name}" value="${text(c.value)}" data-option="${text(
-      o.name
-    )}" data-option-id="${text(o.id || "")}" data-label="${text(c.label)}"`;
+function choiceInput(o, c, group) {
+  return `type="radio" name="${group}" value="${text(c.value)}" data-option="${text(
+    o.name
+  )}" data-option-id="${text(o.id || "")}" data-label="${text(c.label)}"`;
+}
 
-  if (isLiftOption(o)) {
-    const cards = o.choices
-      .map((c) => {
-        const mm = liftMm(c.label);
-        const info = (mm && LIFT_INFO[mm]) || {};
-        const big = mm ? inches(mm) : text(c.label);
-        return `
+/* --- height preview (optional) ---
+ * "How tall are you?" turns the lift into a number they can picture. Shown
+ * as three labelled steps so nothing is double-counted: barefoot, in their
+ * shoes (a typical sneaker adds about an inch), then with the lift on top,
+ * marked "up to" because the lift is insole thickness and some of it is
+ * absorbed by the foot and the shoe. */
+const SHOE_ALLOWANCE_IN = 1.0;
+
+function fmtHeight(totalIn) {
+  const halves = Math.round(totalIn * 2);
+  const ft = Math.floor(halves / 24);
+  const rem = halves / 2 - ft * 12;
+  const whole = Math.floor(rem);
+  return `${ft}'${whole}${rem - whole >= 0.5 ? "½" : ""}"`;
+}
+
+function heightHtml() {
+  const ft = [4, 5, 6, 7]
+    .map((n) => `<option value="${n}">${n} ft</option>`)
+    .join("");
+  const inch = Array.from({ length: 12 }, (_, n) => `<option value="${n}">${n} in</option>`).join("");
+  return `
+    <div class="height-calc">
+      <p class="height-q">How tall are you? <span>Optional — see your new height.</span></p>
+      <div class="height-inputs">
+        <label><span class="sr-only">Feet</span>
+          <select id="h-ft"><option value="">Feet</option>${ft}</select></label>
+        <label><span class="sr-only">Inches</span>
+          <select id="h-in"><option value="">Inches</option>${inch}</select></label>
+      </div>
+      <div class="height-result" id="height-result" aria-live="polite" hidden></div>
+      <p class="fineprint height-note" id="height-note" hidden>
+        "In your shoes" allows about 1" for a typical sneaker. The lift is the
+        insole's thickness at the heel and some is absorbed by your foot and
+        shoe, so treat the last figure as the most you'll gain.
+      </p>
+    </div>`;
+}
+
+function updateHeight() {
+  const out = el("#height-result");
+  const note = el("#height-note");
+  if (!out) return;
+  const ft = el("#h-ft")?.value;
+  const inch = el("#h-in")?.value;
+  const sel = flow.liftOpt && state.selection[flow.liftOpt.name];
+  const mm = sel ? liftMm(sel.label) : null;
+  if (ft === "" || inch === "" || ft == null || inch == null) {
+    out.hidden = true;
+    note.hidden = true;
+    return;
+  }
+  const barefoot = Number(ft) * 12 + Number(inch);
+  const shod = barefoot + SHOE_ALLOWANCE_IN;
+  const info = mm ? LIFT_INFO[mm] : null;
+  out.innerHTML = `
+    <div><span>Barefoot</span><strong>${fmtHeight(barefoot)}</strong></div>
+    <div><span>In your shoes</span><strong>${fmtHeight(shod)}</strong></div>
+    <div class="is-lift"><span>${
+      mm ? `With ${text(info?.name || inches(mm))} (${inches(mm)})` : "Pick a lift"
+    }</span><strong>${mm ? `up to ${fmtHeight(shod + mm / 25.4)}` : "—"}</strong></div>`;
+  out.hidden = false;
+  note.hidden = false;
+}
+
+/* --- step markup --- */
+
+function stepLift(prod) {
+  const o = flow.liftOpt;
+  const img = prod.images[0];
+  const cards = o.choices
+    .map((c) => {
+      const mm = liftMm(c.label);
+      const info = (mm && LIFT_INFO[mm]) || {};
+      return `
         <label class="choice">
-          <input ${attrs(c)}>
+          <input ${choiceInput(o, c, "lift")}>
           <span class="choice-face">
             <span class="lift-bar-wrap" aria-hidden="true"><span class="lift-bar" style="--h:${
               info.bar || "1rem"
             }"></span></span>
-            <span class="lift-in">${big}</span>
-            ${mm ? `<span class="lift-mm">${mm}mm lift</span>` : ""}
+            <span class="lift-in">${mm ? inches(mm) : text(c.label)}</span>
             ${info.name ? `<span class="lift-name">${info.name}</span>` : ""}
             ${info.fit ? `<span class="lift-fit">${info.fit}</span>` : ""}
           </span>
         </label>`;
-      })
-      .join("");
-    return `
+    })
+    .join("");
+  return `
+    <div class="flow-step" data-step="0">
+      ${
+        img
+          ? `<div class="flow-photo"><img src="${text(img)}" alt="${text(
+              prod.name
+            )}" width="900" height="900"></div>`
+          : ""
+      }
+      <h3 class="flow-title" tabindex="-1" data-flow-focus>Choose your lift.</h3>
       <fieldset class="choice-group">
-        <legend>${text(o.name)}</legend>
+        <legend class="sr-only">${text(o.name)}</legend>
         <div class="choice-row">${cards}</div>
-      </fieldset>`;
-  }
+      </fieldset>
+      ${heightHtml()}
+    </div>`;
+}
 
-  const isSize = /size/i.test(o.name);
-  const pills = o.choices
+function pillsFor(o, group, labelFn) {
+  return o.choices
     .map(
       (c) => `
         <label class="choice pill">
-          <input ${attrs(c)}>
-          <span class="choice-face">${text(isSize ? sizeLabel(c.label) : c.label)}</span>
+          <input ${choiceInput(o, c, group)}>
+          <span class="choice-face">${text(labelFn ? labelFn(c.label) : c.label)}</span>
         </label>`
     )
     .join("");
-  return `
-      <fieldset class="choice-group">
-        <legend>${isSize ? "Size (AU men's)" : text(o.name)}</legend>
-        <div class="pill-row">${pills}</div>
-        ${
-          isSize
-            ? "<p class=\"choice-help\">Between sizes? Take the larger one and trim to fit. Wear women's sizes? Go down about 2.</p>"
-            : ""
-        }
-      </fieldset>`;
 }
 
-function pairsHtml() {
+function stepSize() {
+  const o = flow.sizeOpt;
+  const others = flow.otherOpts
+    .map(
+      (x, i) => `
+      <fieldset class="choice-group">
+        <legend>${text(x.name)}</legend>
+        <div class="pill-row">${pillsFor(x, `opt-${i}`)}</div>
+      </fieldset>`
+    )
+    .join("");
+  return `
+    <div class="flow-step" data-step="1" hidden>
+      <h3 class="flow-title" tabindex="-1">What size shoe do you wear?</h3>
+      ${
+        o
+          ? `<fieldset class="choice-group">
+        <legend>Australian men's sizes</legend>
+        <div class="pill-row">${pillsFor(o, "size", sizeLabel)}</div>
+        <p class="choice-help">Between sizes? Take the larger one and trim to fit. Wear women's sizes? Go down about 2.</p>
+      </fieldset>`
+          : ""
+      }
+      ${others}
+    </div>`;
+}
+
+function stepPairs() {
   // Wix sells one product, priced per pair. These are quantities, not packs
-  // with their own prices — so no per-pack price is shown or implied here.
-  // "Our pick" rather than "Most popular": that is a claim about what
-  // customers buy, and can only go up once sales show it.
+  // with their own prices. "Our pick" rather than "Most popular": that is a
+  // claim about what customers buy, and can only go up once sales show it.
   const rows = [
-    { n: 1, label: "1 pair" },
-    { n: 2, label: "2 pairs", tag: "Our pick" },
-    { n: 3, label: "3 pairs" },
-    { n: 5, label: "5 pairs" },
+    { n: 1, label: "1 pair", note: "One pair, one pair of shoes" },
+    { n: 2, label: "2 pairs", tag: "Our pick", note: "Everyday shoes and going-out shoes" },
+    { n: 3, label: "3 pairs", note: "Sneakers, boots and work shoes" },
+    { n: 5, label: "5 pairs", note: "One in every pair you own" },
   ];
   return `
-    <fieldset class="choice-group">
-      <legend>Pairs</legend>
-      <div class="pair-list">
-        ${rows
-          .map(
-            (r) => `
-          <label class="choice pair">
-            <input type="radio" name="qty" value="${r.n}"${
-              r.n === state.qty ? " checked" : ""
-            }>
-            <span class="choice-face">
-              <span class="pair-name">${r.label}${
-                r.tag ? `<span class="pair-tag">${r.tag}</span>` : ""
-              }</span>
-              ${r.note ? `<span class="pair-note">${r.note}</span>` : ""}
-            </span>
-          </label>`
-          )
-          .join("")}
-      </div>
-    </fieldset>`;
-}
-
-function renderGallery(prod) {
-  const box = el("#buy-gallery");
-  if (!box || !prod.images.length) return;
-  const imgs = prod.images.slice(0, 6);
-  box.innerHTML = `
-    <div class="buy-main"><img id="buy-main-img" src="${text(imgs[0])}" alt="${text(
-      prod.name
-    )}" width="900" height="900"></div>
-    ${
-      imgs.length > 1
-        ? `<div class="buy-thumbs">${imgs
+    <div class="flow-step" data-step="2" hidden>
+      <h3 class="flow-title" tabindex="-1">How many pairs?</h3>
+      <fieldset class="choice-group">
+        <legend class="sr-only">Pairs</legend>
+        <div class="pair-list">
+          ${rows
             .map(
-              (src, i) =>
-                `<button type="button" class="buy-thumb" data-src="${text(
-                  src
-                )}" aria-label="Show photo ${i + 1}" aria-pressed="${
-                  i === 0
-                }"><img src="${text(src)}" alt="" loading="lazy" width="120" height="120"></button>`
+              (r) => `
+            <label class="choice pair">
+              <input type="radio" name="qty" value="${r.n}"${r.n === state.qty ? " checked" : ""}>
+              <span class="choice-face">
+                <span class="pair-name">${r.label}${
+                  r.tag ? `<span class="pair-tag">${r.tag}</span>` : ""
+                }</span>
+                <span class="pair-note">${r.note}</span>
+              </span>
+            </label>`
             )
-            .join("")}</div>`
-        : ""
-    }`;
-  box.querySelectorAll(".buy-thumb").forEach((b) =>
-    b.addEventListener("click", () => {
-      el("#buy-main-img").src = b.dataset.src;
-      box
-        .querySelectorAll(".buy-thumb")
-        .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-    })
-  );
+            .join("")}
+        </div>
+      </fieldset>
+    </div>`;
 }
 
-function updateSummary() {
-  const node = el("#buy-summary");
-  if (!node) return;
-  const parts = [];
-  for (const o of state.product.options) {
-    const s = state.selection[o.name];
-    if (!s) continue;
-    const mm = isLiftOption(o) ? liftMm(s.label) : null;
-    parts.push(
-      mm ? `${inches(mm)} lift` : /size/i.test(o.name) ? sizeLabel(s.label) : s.label
-    );
+function stepReview() {
+  return `
+    <div class="flow-step" data-step="3" hidden>
+      <h3 class="flow-title" tabindex="-1">Your order.</h3>
+      <dl class="review">
+        <div><dt>Lift</dt><dd id="rv-lift"></dd><button type="button" class="flow-change" data-go="#lift">Change</button></div>
+        <div><dt>Size</dt><dd id="rv-size"></dd><button type="button" class="flow-change" data-go="#size">Change</button></div>
+        <div><dt>Pairs</dt><dd id="rv-pairs"></dd><button type="button" class="flow-change" data-go="#pairs">Change</button></div>
+      </dl>
+      <p class="buy-price" id="buy-price">
+        <strong id="shop-price"></strong>
+        <span id="buy-welcome" class="buy-welcome" hidden></span>
+        <span class="buy-unit">per pair · AUD</span>
+      </p>
+      <p class="review-ship" id="rv-ship"></p>
+      <ul class="buy-assure">
+        <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>Tracking emailed when your order ships</li>
+        <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>Secure checkout</li>
+        <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg><span>Questions? <a href="mailto:support@blaxland.co">support@blaxland.co</a></span></li>
+      </ul>
+      <p class="fineprint">
+        All prices in Australian dollars, confirmed at checkout with any
+        shipping. We ship within Australia only. Lift is the insole's thickness
+        at the heel, not a measurement of how much taller you will stand —
+        see the <a href="faq.html">FAQ</a>.
+      </p>
+    </div>`;
+}
+
+/* --- step logic --- */
+
+function stepDone(i) {
+  if (i === 0) return Boolean(flow.liftOpt && state.selection[flow.liftOpt.name]);
+  if (i === 1) {
+    const need = [flow.sizeOpt, ...flow.otherOpts].filter(Boolean);
+    return need.every((o) => state.selection[o.name]);
   }
-  parts.push(state.qty === 1 ? "1 pair" : `${state.qty} pairs`);
-  node.textContent = parts.join(" · ");
+  if (i === 2) return [1, 2, 3, 5].includes(state.qty);
+  return true;
+}
+
+function furthestAllowed() {
+  for (let i = 0; i < 3; i++) if (!stepDone(i)) return i;
+  return 3;
+}
+
+function updateActions() {
+  const next = el("#flow-next");
+  const buy = el("#buy");
+  if (!next || !buy) return;
+  const last = flow.step === 3;
+  next.hidden = last;
+  buy.hidden = !last;
+  if (!last) {
+    next.textContent = NEXT_LABEL[flow.step];
+    next.disabled = !stepDone(flow.step);
+  }
+  const msg = el("#shop-msg");
+  if (msg && !last) msg.textContent = "";
+}
+
+function updateProgress() {
+  const count = el("#flow-count");
+  if (count) count.textContent = `Step ${flow.step + 1} of 4`;
+  document.querySelectorAll("#flow-progress li").forEach((li, i) => {
+    li.classList.toggle("is-done", i < flow.step);
+    li.classList.toggle("is-current", i === flow.step);
+  });
+}
+
+function updateReview() {
+  const sel = state.selection;
+  const lift = flow.liftOpt && sel[flow.liftOpt.name];
+  const size = flow.sizeOpt && sel[flow.sizeOpt.name];
+  const mm = lift ? liftMm(lift.label) : null;
+  const info = mm ? LIFT_INFO[mm] : null;
+  const set = (id, v) => {
+    const n = el(id);
+    if (n) n.textContent = v;
+  };
+  set("#rv-lift", lift ? `${info?.name ? info.name + " · " : ""}${mm ? inches(mm) : lift.label}` : "—");
+  set("#rv-size", size ? sizeLabel(size.label) : "—");
+  set("#rv-pairs", state.qty === 1 ? "1 pair" : `${state.qty} pairs`);
+  set(
+    "#rv-ship",
+    state.qty >= 2 ? "Free shipping in Australia." : "Shipping is shown at checkout. Free on 2+ pairs."
+  );
+  refreshPrice();
+}
+
+function showStep(target, animate) {
+  const steps = [...document.querySelectorAll("#shop .flow-step")];
+  if (!steps.length) return;
+  const from = flow.step;
+  const cur = steps[from];
+  const next = steps[target];
+  flow.step = target;
+  updateProgress();
+  updateActions();
+  if (target === 3) updateReview();
+
+  const body = el("#flow-body");
+  if (cur === next || !animate || prefersReducedMotion()) {
+    steps.forEach((s, i) => (s.hidden = i !== target));
+    if (body) body.scrollTop = 0;
+    return;
+  }
+
+  // Slide in the direction of travel: forward moves left, back moves right.
+  const dir = target > from ? 1 : -1;
+  const ease = "cubic-bezier(.22,.61,.36,1)";
+  steps.forEach((s, i) => {
+    if (s !== cur && s !== next) s.hidden = true;
+  });
+  cur.animate(
+    [
+      { transform: "translateX(0)", opacity: 1 },
+      { transform: `translateX(${-dir * 32}%)`, opacity: 0 },
+    ],
+    { duration: 220, easing: ease }
+  ).onfinish = () => {
+    cur.hidden = true;
+    if (body) body.scrollTop = 0;
+    next.hidden = false;
+    next.animate(
+      [
+        { transform: `translateX(${dir * 32}%)`, opacity: 0 },
+        { transform: "translateX(0)", opacity: 1 },
+      ],
+      { duration: 320, easing: ease }
+    );
+    next.querySelector(".flow-title")?.focus({ preventScroll: true });
+  };
+}
+
+function handleRoute(hash, animate) {
+  if (!el("#shop .flow-step")) return;
+  const name = hash === "#order" ? "lift" : String(hash || "").slice(1);
+  const want = STEPS.indexOf(name);
+  if (want < 0) return; // home: site.js has closed the screen
+  const allowed = Math.min(want, furthestAllowed());
+  if (allowed !== want) window.blxNav?.replace(`#${STEPS[allowed]}`);
+  showStep(allowed, animate);
+}
+
+function goNext() {
+  if (!stepDone(flow.step) || flow.step >= 3) return;
+  window.blxNav?.go(`#${STEPS[flow.step + 1]}`);
+}
+
+function goBack() {
+  if (flow.step > 0) window.blxNav?.back(`#${STEPS[flow.step - 1]}`);
+  else window.blxNav?.back();
 }
 
 function renderProduct(prod) {
   const mount = el("#shop");
   if (!mount) return;
 
-  renderGallery(prod);
+  flow.liftOpt = prod.options.find(isLiftOption) || null;
+  flow.sizeOpt = prod.options.find(isSizeOption) || null;
+  flow.otherOpts = prod.options.filter((o) => o !== flow.liftOpt && o !== flow.sizeOpt);
+  if (!flow.liftOpt) {
+    // Without a lift option there is no first step to show.
+    fallback("No Lift option on the Wix product.");
+    return;
+  }
 
-  const nameNode = el("#buy-name");
-  if (nameNode && prod.name) nameNode.textContent = prod.name;
-
-  const priceNode = el("#shop-price");
-  if (priceNode) priceNode.textContent = prod.price || "";
-  const priceRow = el("#buy-price");
-  if (priceRow) priceRow.hidden = !prod.price;
-  renderWelcomePrice();
-
-  mount.innerHTML = `
-    <div class="buy-panel">
-      ${prod.options.map(optionHtml).join("")}
-      ${pairsHtml()}
-      <div>
-        <a class="btn btn-block" id="buy" role="button" href="#order">Checkout</a>
-        <p class="buy-summary" id="buy-summary"></p>
-        <p class="fineprint" id="shop-msg" role="status" aria-live="polite"></p>
-      </div>
-    </div>`;
+  mount.innerHTML = stepLift(prod) + stepSize() + stepPairs() + stepReview();
 
   mount.querySelectorAll("input[data-option]").forEach((input) =>
     input.addEventListener("change", () => {
@@ -533,26 +734,35 @@ function renderProduct(prod) {
         choiceId: input.value,
         label: input.dataset.label,
       };
-      el("#shop-msg").textContent = "";
-      refreshPrice();
-      updateSummary();
+      updateActions();
+      updateHeight();
     })
   );
-
   mount.querySelectorAll('input[name="qty"]').forEach((input) =>
     input.addEventListener("change", () => {
       if (input.checked) state.qty = Number(input.value) || 1;
-      updateSummary();
+      updateActions();
     })
   );
+  ["#h-ft", "#h-in"].forEach((id) => el(id)?.addEventListener("change", updateHeight));
+  mount.querySelectorAll(".flow-change").forEach((b) =>
+    b.addEventListener("click", () => window.blxNav?.go(b.dataset.go))
+  );
 
-  el("#buy").addEventListener("click", onBuy);
-  updateSummary();
+  el("#flow-next")?.addEventListener("click", goNext);
+  el("#flow-back")?.addEventListener("click", goBack);
+  el("#buy")?.addEventListener("click", onBuy);
+  window.addEventListener("blx:route", (e) => handleRoute(e.detail?.hash, e.detail?.animate));
 
-  // Swap: live product in, static placeholder out.
+  // Live product in, static placeholder out.
   mount.hidden = false;
   const stat = el("#static-offers");
   if (stat) stat.hidden = true;
+
+  flow.step = 0;
+  updateProgress();
+  updateActions();
+  handleRoute(location.hash, false);
 }
 
 function showLoading() {
@@ -565,6 +775,10 @@ function showLoading() {
     mount.hidden = false;
     mount.innerHTML = `<p class="fineprint" style="margin:0">Loading…</p>`;
   }
+  // The back arrow must work even before the product arrives.
+  el("#flow-back")?.addEventListener("click", () => {
+    if (!el("#shop .flow-step")) window.blxNav?.back();
+  });
 }
 
 function fallback(message) {
@@ -576,6 +790,8 @@ function fallback(message) {
     mount.innerHTML = "";
   }
   if (stat) stat.hidden = false;
+  const actions = el("#flow-actions");
+  if (actions) actions.hidden = true;
 
   // Customers see the normal
   // page with its honest "Opening soon" buttons; the real reason goes to the
