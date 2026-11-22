@@ -657,7 +657,7 @@ function stepReview() {
       </p>
       <p class="review-ship" id="rv-ship"></p>
       <ul class="buy-assure">
-        <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>Tracking emailed when your order ships</li>
+        <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg><span><strong>Arrives in 5–12 business days</strong>, with tracking emailed when it ships</span></li>
         <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>Secure checkout</li>
         <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg><span>Questions? <a href="mailto:support@blaxland.co">support@blaxland.co</a></span></li>
       </ul>
