@@ -130,16 +130,56 @@
     route(true);
   });
 
+  var reduceMotion =
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // A quick, eased run back to the top — fixed length whatever the distance,
+  // so even from the footer it feels like one motion, not a long scroll.
+  function scrollToTop(ms) {
+    return new Promise(function (done) {
+      var start = window.scrollY;
+      if (start <= 0 || reduceMotion) {
+        window.scrollTo(0, 0);
+        return done();
+      }
+      var html = document.documentElement;
+      var prev = html.style.scrollBehavior;
+      html.style.scrollBehavior = "auto"; // the page's smooth scroll would fight each frame
+      var t0 = null;
+      function frame(t) {
+        if (t0 === null) t0 = t;
+        var p = Math.min(1, (t - t0) / ms);
+        var eased = 1 - Math.pow(1 - p, 3);
+        window.scrollTo(0, start * (1 - eased));
+        if (p < 1) requestAnimationFrame(frame);
+        else {
+          html.style.scrollBehavior = prev;
+          done();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
   // Any link on the page to the product goes through the router, so it
-  // slides rather than jumps.
+  // slides rather than jumps. The floating pill first runs the page back up
+  // to the top, then slides across — one continuous movement.
   document.addEventListener("click", function (e) {
     var a = e.target.closest && e.target.closest("a[href]");
     if (!a) return;
     var href = a.getAttribute("href");
     if (!inShop(href)) return;
     e.preventDefault();
-    lastTrigger = a;
-    if (!inShop(location.hash)) window.blxNav.go("#lift");
+    if (inShop(location.hash)) return;
+    var fromPill = a.classList.contains("jump-to-order");
+    lastTrigger = fromPill ? document.querySelector(".hero .btn") || a : a;
+    if (fromPill && window.scrollY > 0) {
+      scrollToTop(450).then(function () {
+        window.blxNav.go("#lift");
+      });
+    } else {
+      window.blxNav.go("#lift");
+    }
   });
 
   route(false);

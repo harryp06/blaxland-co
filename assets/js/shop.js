@@ -358,10 +358,12 @@ const EU_TO_AU = {
 };
 
 function sizeLabel(label) {
+  // Shown as the bare AU range ("7–8.5"); the step's heading says they are
+  // Australian men's sizes, so each button doesn't need to.
   const raw = String(label || "").trim();
-  if (/\bau\b/i.test(raw)) return raw.replace(/-/g, "–"); // already AU in Wix
+  if (/\bau\b/i.test(raw)) return raw.replace(/\bau\b\s*/i, "").replace(/-/g, "–");
   const key = raw.replace(/^eu\s*/i, "").replace(/[–—]/g, "-").replace(/\s+/g, "");
-  if (EU_TO_AU[key]) return `AU ${EU_TO_AU[key]}`;
+  if (EU_TO_AU[key]) return EU_TO_AU[key];
   return `EU ${raw.replace(/-/g, "–")}`;
 }
 
@@ -390,19 +392,39 @@ function fmtHeight(totalIn) {
   return `${ft}'${whole}${rem - whole >= 0.5 ? "½" : ""}"`;
 }
 
+// Two scroll wheels, like a phone's time picker: feet 4–6, inches 0–11.
+// They open on 5'9" but the result stays hidden until the visitor actually
+// moves one, so it remains optional and never shows a height they didn't give.
+const WHEELS = {
+  ft: { values: [4, 5, 6], start: 5, unit: "ft", label: "Feet" },
+  in: { values: Array.from({ length: 12 }, (_, n) => n), start: 9, unit: "in", label: "Inches" },
+};
+const height = { ft: WHEELS.ft.start, in: WHEELS.in.start, touched: false, quietUntil: 0 };
+
+function wheelHtml(key) {
+  const w = WHEELS[key];
+  return `
+    <div class="wheel-col" id="wheel-${key}" data-wheel="${key}" role="listbox"
+         aria-label="${w.label}" tabindex="0">
+      <div class="wheel-pad" aria-hidden="true"></div>
+      ${w.values
+        .map(
+          (v) =>
+            `<div class="wheel-item" role="option" id="wheel-${key}-${v}" data-v="${v}" aria-selected="false">${v} ${w.unit}</div>`
+        )
+        .join("")}
+      <div class="wheel-pad" aria-hidden="true"></div>
+    </div>`;
+}
+
 function heightHtml() {
-  const ft = [4, 5, 6, 7]
-    .map((n) => `<option value="${n}">${n} ft</option>`)
-    .join("");
-  const inch = Array.from({ length: 12 }, (_, n) => `<option value="${n}">${n} in</option>`).join("");
   return `
     <div class="height-calc">
-      <p class="height-q">How tall are you? <span>Optional — see your new height.</span></p>
-      <div class="height-inputs">
-        <label><span class="sr-only">Feet</span>
-          <select id="h-ft"><option value="">Feet</option>${ft}</select></label>
-        <label><span class="sr-only">Inches</span>
-          <select id="h-in"><option value="">Inches</option>${inch}</select></label>
+      <p class="height-q">How tall are you? <span>Optional — scroll to see your new height.</span></p>
+      <div class="wheel">
+        ${wheelHtml("ft")}
+        ${wheelHtml("in")}
+        <div class="wheel-band" aria-hidden="true"></div>
       </div>
       <div class="height-result" id="height-result" aria-live="polite" hidden></div>
       <p class="fineprint height-note" id="height-note" hidden>
@@ -413,20 +435,81 @@ function heightHtml() {
     </div>`;
 }
 
+function markWheel(col, value) {
+  col.querySelectorAll(".wheel-item").forEach((it) => {
+    const on = Number(it.dataset.v) === value;
+    it.classList.toggle("is-on", on);
+    it.setAttribute("aria-selected", String(on));
+    if (on) col.setAttribute("aria-activedescendant", it.id);
+  });
+}
+
+function itemHeight(col) {
+  return col.querySelector(".wheel-item")?.offsetHeight || 48;
+}
+
+function scrollWheelTo(col, value, smooth) {
+  const w = WHEELS[col.dataset.wheel];
+  const i = w.values.indexOf(value);
+  if (i < 0) return;
+  col.scrollTo({ top: i * itemHeight(col), behavior: smooth ? "smooth" : "auto" });
+}
+
+function positionWheels() {
+  // Needs layout, so only once the lift step is on screen. Scroll events in
+  // the next moment are our own positioning, not the visitor's.
+  height.quietUntil = performance.now() + 300;
+  document.querySelectorAll(".wheel-col").forEach((col) => {
+    const key = col.dataset.wheel;
+    scrollWheelTo(col, height[key], false);
+    markWheel(col, height[key]);
+  });
+}
+
+function initWheels() {
+  document.querySelectorAll(".wheel-col").forEach((col) => {
+    const key = col.dataset.wheel;
+    const w = WHEELS[key];
+    let t = null;
+    col.addEventListener("scroll", () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const i = Math.round(col.scrollTop / itemHeight(col));
+        const v = w.values[Math.max(0, Math.min(w.values.length - 1, i))];
+        markWheel(col, v);
+        if (performance.now() < height.quietUntil) return; // our own positioning
+        height[key] = v;
+        height.touched = true;
+        updateHeight();
+      }, 90);
+    });
+    col.addEventListener("click", (e) => {
+      const it = e.target.closest(".wheel-item");
+      if (it) scrollWheelTo(col, Number(it.dataset.v), true);
+    });
+    col.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      e.preventDefault();
+      const i = w.values.indexOf(height[key]) + (e.key === "ArrowDown" ? 1 : -1);
+      const v = w.values[Math.max(0, Math.min(w.values.length - 1, i))];
+      scrollWheelTo(col, v, true);
+    });
+  });
+  positionWheels();
+}
+
 function updateHeight() {
   const out = el("#height-result");
   const note = el("#height-note");
   if (!out) return;
-  const ft = el("#h-ft")?.value;
-  const inch = el("#h-in")?.value;
-  const sel = flow.liftOpt && state.selection[flow.liftOpt.name];
-  const mm = sel ? liftMm(sel.label) : null;
-  if (ft === "" || inch === "" || ft == null || inch == null) {
+  if (!height.touched) {
     out.hidden = true;
     note.hidden = true;
     return;
   }
-  const barefoot = Number(ft) * 12 + Number(inch);
+  const sel = flow.liftOpt && state.selection[flow.liftOpt.name];
+  const mm = sel ? liftMm(sel.label) : null;
+  const barefoot = height.ft * 12 + height.in;
   const shod = barefoot + SHOE_ALLOWANCE_IN;
   const info = mm ? LIFT_INFO[mm] : null;
   out.innerHTML = `
@@ -510,8 +593,8 @@ function stepSize() {
         o
           ? `<fieldset class="choice-group">
         <legend>Australian men's sizes</legend>
-        <div class="pill-row">${pillsFor(o, "size", sizeLabel)}</div>
-        <p class="choice-help">Between sizes? Take the larger one and trim to fit. Wear women's sizes? Go down about 2.</p>
+        <div class="size-row">${pillsFor(o, "size", sizeLabel)}</div>
+        <p class="choice-help">Between sizes? Take the larger one and trim to fit.</p>
       </fieldset>`
           : ""
       }
@@ -519,15 +602,18 @@ function stepSize() {
     </div>`;
 }
 
+// Small aeroplane = free shipping (orders of 2+). Labelled for screen readers.
+const PLANE_SVG = `<svg class="pair-ship" width="18" height="18" viewBox="0 0 24 24" role="img" aria-label="Free shipping"><title>Free shipping</title><path fill="currentColor" d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="rotate(90 12 12)"/></svg>`;
+
 function stepPairs() {
   // Wix sells one product, priced per pair. These are quantities, not packs
-  // with their own prices. "Our pick" rather than "Most popular": that is a
-  // claim about what customers buy, and can only go up once sales show it.
+  // with their own prices. Biggest at the top; the aeroplane marks the ones
+  // that ship free.
   const rows = [
-    { n: 1, label: "1 pair", note: "One pair, one pair of shoes" },
-    { n: 2, label: "2 pairs", tag: "Our pick", note: "Everyday shoes and going-out shoes" },
+    { n: 5, label: "5 pairs", tag: "Best value", note: "One in every pair you own" },
     { n: 3, label: "3 pairs", note: "Sneakers, boots and work shoes" },
-    { n: 5, label: "5 pairs", note: "One in every pair you own" },
+    { n: 2, label: "2 pairs", tag: "Most popular", note: "Everyday and going-out shoes" },
+    { n: 1, label: "1 pair", tag: "Try me", soft: true, note: "One pair to start with" },
   ];
   return `
     <div class="flow-step" data-step="2" hidden>
@@ -541,10 +627,11 @@ function stepPairs() {
             <label class="choice pair">
               <input type="radio" name="qty" value="${r.n}"${r.n === state.qty ? " checked" : ""}>
               <span class="choice-face">
-                <span class="pair-name">${r.label}${
-                  r.tag ? `<span class="pair-tag">${r.tag}</span>` : ""
-                }</span>
-                <span class="pair-note">${r.note}</span>
+                <span class="pair-main">
+                  <span class="pair-name">${r.label}${r.n >= 2 ? PLANE_SVG : ""}</span>
+                  <span class="pair-note">${r.note}</span>
+                </span>
+                ${r.tag ? `<span class="pair-tag${r.soft ? " is-soft" : ""}">${r.tag}</span>` : ""}
               </span>
             </label>`
             )
@@ -651,6 +738,7 @@ function showStep(target, animate) {
   const cur = steps[from];
   const next = steps[target];
   flow.step = target;
+  if (target === 0 && !height.touched) requestAnimationFrame(positionWheels);
   updateProgress();
   updateActions();
   if (target === 3) updateReview();
@@ -744,7 +832,7 @@ function renderProduct(prod) {
       updateActions();
     })
   );
-  ["#h-ft", "#h-in"].forEach((id) => el(id)?.addEventListener("change", updateHeight));
+  initWheels();
   mount.querySelectorAll(".flow-change").forEach((b) =>
     b.addEventListener("click", () => window.blxNav?.go(b.dataset.go))
   );

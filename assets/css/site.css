@@ -1105,6 +1105,19 @@ html.no-anim .home-view {
   gap: 0.5rem;
 }
 
+/* Five sizes, five equal buttons across one row. */
+.size-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.size-row .choice-face {
+  padding: 0 0.15rem;
+  font-size: clamp(0.78rem, 3.4vw, 0.95rem);
+  white-space: nowrap;
+}
+
 .pair-list {
   display: flex;
   flex-direction: column;
@@ -1216,22 +1229,33 @@ html.no-anim .home-view {
   padding: 1.1rem 1.15rem;
 }
 
+.pair-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
 .pair-name {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 0.5rem;
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+.pair-ship {
+  flex: none;
+  color: var(--lime);
 }
 
 .pair-note {
   font-size: 0.82rem;
   color: var(--muted);
-  text-align: right;
 }
 
 .pair-tag {
+  flex: none;
   background: var(--lime);
   color: var(--ink);
   font-size: 0.62rem;
@@ -1240,6 +1264,12 @@ html.no-anim .home-view {
   text-transform: uppercase;
   padding: 0.25rem 0.5rem;
   border-radius: 2px;
+}
+
+.pair-tag.is-soft {
+  background: transparent;
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--line-dark);
 }
 
 .choice-help {
@@ -1280,23 +1310,74 @@ html.no-anim .home-view {
   color: var(--muted);
 }
 
-.height-inputs {
+/* Scroll wheels (feet / inches), like a phone's time picker. Three rows
+   show; the middle row is the pick, marked by the band behind it. */
+.wheel {
+  --row: 3rem;
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.6rem;
+  height: calc(var(--row) * 3);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
 }
 
-/* 16px text so iPhones don't zoom the page when a select is tapped. */
-.height-inputs select {
-  width: 100%;
-  min-height: 3rem;
-  padding: 0 0.9rem;
-  border: 1px solid var(--line-dark);
+.wheel-col {
+  position: relative;
+  z-index: 1;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  outline: none;
+  touch-action: pan-y;
+}
+
+.wheel-col::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-col:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
   border-radius: 6px;
-  background: var(--surface);
+}
+
+.wheel-pad,
+.wheel-item {
+  height: var(--row);
+}
+
+.wheel-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  font-size: 1.15rem;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s, font-size 0.15s;
+}
+
+.wheel-item.is-on {
   color: var(--fg);
-  font: inherit;
-  font-size: 1rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.wheel-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--row);
+  height: var(--row);
+  border-block: 1px solid var(--line-dark);
+  border-radius: 6px;
+  background: hsl(70 100% 50% / 0.06);
+  pointer-events: none;
 }
 
 .height-result {
