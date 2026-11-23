@@ -20,7 +20,7 @@
 const CFG = window.WIX_CONFIG || {};
 const TOKENS_KEY = "blaxland_wix_tokens";
 
-const state = { client: null, version: null, product: null, selection: {}, qty: 1 };
+const state = { client: null, version: null, product: null, selection: {}, qty: 2 };
 
 /* ---------- welcome discount (Omnisend signup -> Wix coupon) ----------
  * The signup itself lives in Omnisend. All this does is remember, on this
@@ -77,28 +77,7 @@ function listenForSignup() {
       code: true,
       email: typeof email === "string" && email.includes("@") ? email.trim() : undefined,
     });
-    renderWelcomePrice();
   });
-}
-
-function renderWelcomePrice() {
-  // The ONE exception to "no arithmetic on prices": showing the signup price
-  // next to the struck-through full price. It is shown only to someone the
-  // coupon will be applied for, and uses the percentage configured to match
-  // the Wix coupon. Checkout is still where Wix states the real total.
-  const base = el("#shop-price");
-  const note = el("#buy-welcome");
-  if (!base || !note) return;
-  const amount = Number(String(base.textContent).replace(/[^0-9.]/g, ""));
-  const on = welcomeActive() && WELCOME.percent > 0 && amount > 0;
-  base.classList.toggle("is-struck", on);
-  note.hidden = !on;
-  if (!on) return;
-  const cents = Math.round(amount * (100 - WELCOME.percent));
-  const discounted = money({ amount: (cents / 100).toFixed(2) });
-  note.innerHTML = `<strong>${text(discounted || "")}</strong><span class="buy-welcome-tag">${
-    WELCOME.percent
-  }% welcome discount applied at checkout</span>`;
 }
 
 /* ---------- helpers ---------- */
@@ -605,39 +584,92 @@ function stepSize() {
 // Small aeroplane = free shipping (orders of 2+). Labelled for screen readers.
 const PLANE_SVG = `<svg class="pair-ship" width="18" height="18" viewBox="0 0 24 24" role="img" aria-label="Free shipping"><title>Free shipping</title><path fill="currentColor" d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="rotate(90 12 12)"/></svg>`;
 
+/* --- bundle prices (display) ---
+ * From CFG.bundles, which mirrors the Wix automatic discounts and shipping
+ * rate. Per-pair figures are labelled as such and never presented as the
+ * amount payable; the review step shows Wix's own total. */
+const BUNDLES = CFG.bundles || null;
+
+function aud(n) {
+  const v = Math.round(n * 100) / 100;
+  return Number.isInteger(v) ? `$${v}` : `$${v.toFixed(2)}`;
+}
+
+function packPrice(n) {
+  return BUNDLES?.packs?.[n] ?? null;
+}
+
 function stepPairs() {
-  // Wix sells one product, priced per pair. These are quantities, not packs
-  // with their own prices. Biggest at the top; the aeroplane marks the ones
-  // that ship free.
+  // Main offer is the 2-pack (selected by default, strongest emphasis). The
+  // 5-pack is the value anchor, kept last so $115 isn't the first price seen.
+  const single = BUNDLES?.single;
+  const delivered1 = single ? single.price + single.shipping : null;
+  const two = packPrice(2);
   const rows = [
-    { n: 5, label: "5 pairs", tag: "Best value", note: "One in every pair you own" },
+    { n: 1, label: "1 pair", note: "One pair to try" },
+    { n: 2, label: "2 pairs", tag: "Recommended", main: true, note: "One for your everyday shoes. One for going out." },
     { n: 3, label: "3 pairs", note: "Sneakers, boots and work shoes" },
-    { n: 2, label: "2 pairs", tag: "Most popular", note: "Everyday and going-out shoes" },
-    { n: 1, label: "1 pair", tag: "Try me", soft: true, note: "One pair to start with" },
+    { n: 5, label: "5 pairs", tag: "Best value", note: "One in every pair you own" },
   ];
+  const priceHtml = (r) => {
+    const total = packPrice(r.n);
+    if (total == null) return "";
+    if (r.n === 1 && single) {
+      return `<span class="pair-price"><strong>${aud(single.price)}</strong><span>+ ${aud(
+        single.shipping
+      )} shipping</span></span>`;
+    }
+    return `<span class="pair-price"><strong>${aud(total)}</strong><span>${aud(
+      total / r.n
+    )} per pair</span></span>`;
+  };
+  const shipHtml = (r) =>
+    r.n >= 2
+      ? `<span class="pair-free">${PLANE_SVG}Free shipping</span>`
+      : delivered1
+      ? `<span class="pair-free is-paid">${aud(delivered1)} delivered</span>`
+      : "";
+  const pitch =
+    delivered1 && two
+      ? `<p class="pairs-pitch">One pair is <strong>${aud(delivered1)}</strong> delivered. Get two for just <strong>${aud(
+          two - delivered1
+        )}</strong> more.</p>`
+      : "";
   return `
     <div class="flow-step" data-step="2" hidden>
       <h3 class="flow-title" tabindex="-1">How many pairs?</h3>
+      ${pitch}
       <fieldset class="choice-group">
         <legend class="sr-only">Pairs</legend>
         <div class="pair-list">
           ${rows
             .map(
               (r) => `
-            <label class="choice pair">
+            <label class="choice pair${r.main ? " is-main" : ""}">
               <input type="radio" name="qty" value="${r.n}"${r.n === state.qty ? " checked" : ""}>
               <span class="choice-face">
-                <span class="pair-main">
-                  <span class="pair-name">${r.label}${r.n >= 2 ? PLANE_SVG : ""}</span>
-                  <span class="pair-note">${r.note}</span>
+                ${
+                  r.tag
+                    ? `<span class="pair-tag">${r.tag}${
+                        r.n === 5 && packPrice(5) ? ` — ${aud(packPrice(5) / 5)}/pair` : ""
+                      }</span>`
+                    : ""
+                }
+                <span class="pair-top">
+                  <span class="pair-name">${r.label}</span>
+                  ${priceHtml(r)}
                 </span>
-                ${r.tag ? `<span class="pair-tag${r.soft ? " is-soft" : ""}">${r.tag}</span>` : ""}
+                <span class="pair-bottom">
+                  <span class="pair-note">${r.note}</span>
+                  ${shipHtml(r)}
+                </span>
               </span>
             </label>`
             )
             .join("")}
         </div>
       </fieldset>
+      <p class="choice-help">Every pair in a pack comes in the lift and size you picked.</p>
     </div>`;
 }
 
@@ -650,12 +682,13 @@ function stepReview() {
         <div><dt>Size</dt><dd id="rv-size"></dd><button type="button" class="flow-change" data-go="#size">Change</button></div>
         <div><dt>Pairs</dt><dd id="rv-pairs"></dd><button type="button" class="flow-change" data-go="#pairs">Change</button></div>
       </dl>
-      <p class="buy-price" id="buy-price">
-        <strong id="shop-price"></strong>
-        <span id="buy-welcome" class="buy-welcome" hidden></span>
-        <span class="buy-unit">per pair · AUD</span>
-      </p>
-      <p class="review-ship" id="rv-ship"></p>
+      <div class="quote" id="quote" aria-live="polite">
+        <div class="quote-row"><span id="q-items-label">Pairs</span><span id="q-items">—</span></div>
+        <div class="quote-row" id="q-disc-row" hidden><span>Welcome discount</span><span id="q-disc"></span></div>
+        <div class="quote-row"><span>Shipping</span><span id="q-ship">—</span></div>
+        <div class="quote-row is-total"><span>Total (AUD)</span><span id="q-total">—</span></div>
+        <p class="fineprint quote-note" id="q-note">Calculating your total…</p>
+      </div>
       <ul class="buy-assure">
         <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg><span><strong>Arrives in 5–12 business days</strong>, with tracking emailed when it ships</span></li>
         <li><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="2"></path></svg>Secure checkout</li>
@@ -724,11 +757,52 @@ function updateReview() {
   set("#rv-lift", lift ? `${info?.name ? info.name + " · " : ""}${mm ? inches(mm) : lift.label}` : "—");
   set("#rv-size", size ? sizeLabel(size.label) : "—");
   set("#rv-pairs", state.qty === 1 ? "1 pair" : `${state.qty} pairs`);
-  set(
-    "#rv-ship",
-    state.qty >= 2 ? "Free shipping in Australia." : "Shipping is shown at checkout. Free on 2+ pairs."
-  );
-  refreshPrice();
+  quoteOrder();
+}
+
+/* --- the total, from Wix ---
+ * The review step builds the real cart (same as Checkout does) and asks Wix
+ * to price it for delivery in Australia, so the total on screen is the one
+ * Wix will charge: bundle price, any welcome coupon, and shipping. */
+let quoteSeq = 0;
+
+function wixMoney(v) {
+  if (!v) return null;
+  return v.formattedAmount || money({ amount: v.amount });
+}
+
+async function quoteOrder() {
+  const seq = ++quoteSeq;
+  const set = (id, v) => {
+    const n = el(id);
+    if (n) n.textContent = v;
+  };
+  set("#q-items-label", state.qty === 1 ? "1 pair" : `${state.qty} pairs`);
+  ["#q-items", "#q-ship", "#q-total"].forEach((id) => set(id, "…"));
+  set("#q-note", "Calculating your total…");
+  const discRow = el("#q-disc-row");
+  try {
+    await prepareCart();
+    const t = await state.client.currentCart.estimateCurrentCartTotals({
+      shippingAddress: { country: "AU" },
+    });
+    if (seq !== quoteSeq) return; // a newer choice is already being priced
+    const p = t.priceSummary || {};
+    const disc = Number(p.discount?.amount || 0);
+    const ship = Number(p.shipping?.amount || 0);
+    set("#q-items", wixMoney(p.subtotal) || "—");
+    if (discRow) discRow.hidden = !(disc > 0);
+    if (disc > 0) set("#q-disc", `−${wixMoney(p.discount)}`);
+    set("#q-ship", ship > 0 ? wixMoney(p.shipping) : "Free");
+    set("#q-total", wixMoney(p.total) || "—");
+    set("#q-note", "Calculated by our checkout for delivery within Australia.");
+  } catch (err) {
+    if (seq !== quoteSeq) return;
+    console.warn("[blaxland] could not price the order:", err);
+    ["#q-items", "#q-ship", "#q-total"].forEach((id) => set(id, "—"));
+    if (discRow) discRow.hidden = true;
+    set("#q-note", err?.message?.includes("stock") ? err.message : "Your total will show at checkout, before you pay.");
+  }
 }
 
 function showStep(target, animate) {
@@ -931,12 +1005,89 @@ function refreshPrice() {
   const chosen = Object.keys(state.selection).length;
   if (chosen < state.product.options.length) {
     node.textContent = state.product.price || "";
-    renderWelcomePrice();
     return;
   }
   const v = matchVariant(state.product, state.selection);
   node.textContent = (v && variantPrice(v)) || state.product.price || "";
-  renderWelcomePrice();
+}
+
+/* Put exactly what's chosen on the page into the visitor's Wix cart:
+ * empty it, add the variant at the chosen quantity, apply the welcome coupon
+ * if they signed up. Used by both the review step's total and Checkout. */
+// Cart operations run one at a time. The review step prices the order while
+// the visitor may already be pressing Checkout; both empty and refill the cart,
+// and interleaved they could leave two copies in it.
+let cartQueue = Promise.resolve();
+function inCartQueue(fn) {
+  const run = cartQueue.then(fn, fn);
+  cartQueue = run.catch(() => {});
+  return run;
+}
+
+function prepareCart() {
+  return inCartQueue(fillCart);
+}
+
+async function fillCart() {
+  const prod = state.product;
+  let options;
+  if (state.version === "v1") {
+    // V1 takes a plain name -> chosen-value map.
+    const map = {};
+    for (const s of Object.values(state.selection)) map[s.name] = s.label;
+    options = { options: map };
+  } else {
+    // V3 takes the resolved variant. Same `_id` / `id` caveat as above.
+    const variant = matchVariant(prod, state.selection);
+    const variantId = variant?._id || variant?.id;
+    if (!variantId) throw new Error("That combination isn't available.");
+    if (variant.inventoryStatus && variant.inventoryStatus.inStock === false) {
+      throw new Error(
+        "That option is out of stock in Wix — set its inventory in the Wix dashboard."
+      );
+    }
+    options = { variantId };
+  }
+
+  // Only the pack sizes on the page: 1, 2, 3 or 5 pairs.
+  const qty = [1, 2, 3, 5].includes(state.qty) ? state.qty : 1;
+
+  // Start from an empty cart every time. Wix keeps a visitor's cart between
+  // visits, so without this, coming back and pressing Add to cart again
+  // would stack a second lot on top of the first (5 + 5 = 10 pairs) and drag
+  // old picks into checkout. What they chose on this page is what they buy.
+  try {
+    await state.client.currentCart.deleteCurrentCart();
+  } catch {
+    /* no cart yet — expected on a first visit */
+  }
+
+  await state.client.currentCart.addToCurrentCart({
+    lineItems: [
+      {
+        catalogReference: {
+          appId: CFG.storesAppId,
+          catalogItemId: prod.id,
+          options,
+        },
+        quantity: qty,
+      },
+    ],
+  });
+
+  // Signed up for the welcome discount? Put the coupon on. If Wix refuses
+  // it (coupon missing, already used by this customer), carry on without
+  // it — a full-price checkout beats a failed one, and the code can still
+  // be typed at checkout.
+  if (welcomeActive()) {
+    try {
+      await state.client.currentCart.updateCurrentCart({
+        couponCode: WELCOME.coupon,
+      });
+    } catch (err) {
+      console.warn("[blaxland] welcome coupon not applied:", err?.details?.applicationError?.code || err);
+    }
+  }
 }
 
 async function onBuy(e) {
@@ -960,73 +1111,16 @@ async function onBuy(e) {
   btn.textContent = "Working…";
 
   try {
-    let options;
-    if (state.version === "v1") {
-      // V1 takes a plain name -> chosen-value map.
-      const map = {};
-      for (const s of Object.values(state.selection)) map[s.name] = s.label;
-      options = { options: map };
-    } else {
-      // V3 takes the resolved variant. Same `_id` / `id` caveat as above.
-      const variant = matchVariant(prod, state.selection);
-      const variantId = variant?._id || variant?.id;
-      if (!variantId) throw new Error("That combination isn't available.");
-      if (variant.inventoryStatus && variant.inventoryStatus.inStock === false) {
-        throw new Error(
-          "That option is out of stock in Wix — set its inventory in the Wix dashboard."
-        );
-      }
-      options = { variantId };
-    }
-
-    // Only the pack sizes on the page: 1, 2, 3 or 5 pairs.
-    const qty = [1, 2, 3, 5].includes(state.qty) ? state.qty : 1;
-
-    // Start from an empty cart every time. Wix keeps a visitor's cart between
-    // visits, so without this, coming back and pressing Add to cart again
-    // would stack a second lot on top of the first (5 + 5 = 10 pairs) and drag
-    // old picks into checkout. What they chose on this page is what they buy.
-    try {
-      await state.client.currentCart.deleteCurrentCart();
-    } catch {
-      /* no cart yet — expected on a first visit */
-    }
-
-    await state.client.currentCart.addToCurrentCart({
-      lineItems: [
-        {
-          catalogReference: {
-            appId: CFG.storesAppId,
-            catalogItemId: prod.id,
-            options,
-          },
-          quantity: qty,
-        },
-      ],
-    });
-
-    // Signed up for the welcome discount? Put the coupon on. If Wix refuses
-    // it (coupon missing, already used by this customer), carry on without
-    // it — a full-price checkout beats a failed one, and the code can still
-    // be typed at checkout.
-    if (welcomeActive()) {
-      try {
-        await state.client.currentCart.updateCurrentCart({
-          couponCode: WELCOME.coupon,
-        });
-      } catch (err) {
-        console.warn("[blaxland] welcome coupon not applied:", err?.details?.applicationError?.code || err);
-      }
-    }
-
     // Pre-fill the email they gave the popup, so checkout opens one field
     // shorter. Only ever the address typed on this browser.
     const email = readWelcome()?.email;
-    const { checkoutId } =
-      await state.client.currentCart.createCheckoutFromCurrentCart({
+    const { checkoutId } = await inCartQueue(async () => {
+      await fillCart();
+      return state.client.currentCart.createCheckoutFromCurrentCart({
         channelType: state.ChannelType?.WEB || "WEB",
         ...(email ? { email } : {}),
       });
+    });
 
     const urls = checkoutUrls();
     const redirect = await state.client.redirects.createRedirectSession({

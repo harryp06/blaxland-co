@@ -1221,32 +1221,57 @@ html.no-anim .home-view {
   box-shadow: none;
 }
 
-.pair .choice-face {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.1rem 1.15rem;
+.pair-list {
+  gap: 0.95rem;
 }
 
-.pair-main {
-  display: flex;
+.pair .choice-face {
+  position: relative;
   flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 1.05rem 1.1rem 0.95rem;
+}
+
+.pair input:checked + .choice-face {
+  padding: 1.05rem 1.1rem 0.95rem;
+}
+
+/* The main offer stands out even before it's tapped. */
+.pair.is-main .choice-face {
+  border-color: var(--lime);
+}
+
+.pair-top,
+.pair-bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .pair-name {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   font-size: 1.1rem;
   font-weight: 700;
 }
 
-.pair-ship {
-  flex: none;
-  color: var(--lime);
+.pair-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.pair-price strong {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.pair-price span {
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 .pair-note {
@@ -1254,8 +1279,32 @@ html.no-anim .home-view {
   color: var(--muted);
 }
 
-.pair-tag {
+.pair-free {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   flex: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--lime);
+  white-space: nowrap;
+}
+
+.pair-free.is-paid {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.pair-ship {
+  flex: none;
+  color: var(--lime);
+}
+
+/* Badge sits on the card's top edge. */
+.pair-tag {
+  position: absolute;
+  top: -0.6rem;
+  left: 0.9rem;
   background: var(--lime);
   color: var(--ink);
   font-size: 0.62rem;
@@ -1266,10 +1315,56 @@ html.no-anim .home-view {
   border-radius: 2px;
 }
 
-.pair-tag.is-soft {
-  background: transparent;
-  color: var(--fg);
-  box-shadow: inset 0 0 0 1px var(--line-dark);
+.pairs-pitch {
+  margin: -0.35rem 0 1.25rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid hsl(70 100% 50% / 0.35);
+  border-radius: 6px;
+  background: hsl(70 100% 50% / 0.07);
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.pairs-pitch strong {
+  color: var(--lime);
+}
+
+/* Order total on the review step — every figure comes from Wix. */
+.quote {
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.quote-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  font-size: 0.98rem;
+}
+
+.quote-row[hidden] {
+  display: none;
+}
+
+.quote-row.is-total {
+  margin-top: 0.4rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+}
+
+.quote-row.is-total span:last-child {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 400;
+}
+
+.quote-note {
+  margin: 0.4rem 0 0;
 }
 
 .choice-help {

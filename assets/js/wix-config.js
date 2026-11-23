@@ -44,13 +44,28 @@ window.WIX_CONFIG = {
     thankYou: "https://blaxland.co/thank-you/",
   },
 
+  // Bundle prices shown on the "How many pairs?" cards, in AUD. These MIRROR
+  // what Wix charges — they don't set it. The real prices live in the Wix
+  // dashboard:
+  //   Catalog > Discounts > Automatic Discounts: "2 pairs for $60",
+  //     "3 pairs for $80", "5 pairs for $115" (Quantity discounts on
+  //     BLAXLAND AIR V3; Wix gives each cart the best one).
+  //   Settings > Shipping, delivery & fulfillment > Australia:
+  //     "Standard shipping (tracked)", rate by quantity — 1 item $9.95,
+  //     2 and up $0.
+  // Change a price in Wix and here in the same sitting. The review step always
+  // shows the total Wix itself calculates, so a mismatch shows up there.
+  bundles: {
+    single: { price: 40, shipping: 9.95 },
+    packs: { 1: 40, 2: 60, 3: 80, 5: 115 },
+  },
+
   // Email-signup welcome discount. The Omnisend popup promises it is applied
   // automatically, so shop.js applies this Wix coupon to the cart when the
   // visitor has signed up on this browser (or arrived from the welcome email
   // via ?code=BLX15LND). The coupon itself MUST exist in Wix: Marketing >
-  // Coupons, 15% off, one use per customer. `percent` is display-only and must
-  // match that coupon exactly — it is the one place the page shows a price Wix
-  // didn't send, so if the coupon changes, change this in the same sitting.
+  // Coupons, 15% off, one use per customer. Any saving shows on the review
+  // step as Wix calculates it; `percent` is only used in wording.
   welcome: {
     coupon: "BLX15LND",
     percent: 15,
