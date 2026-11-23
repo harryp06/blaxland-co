@@ -599,6 +599,12 @@ function packPrice(n) {
   return BUNDLES?.packs?.[n] ?? null;
 }
 
+// Same aeroplane, silent: the words "Free shipping" sit right beside it.
+const PLANE_ICON = PLANE_SVG.replace(
+  'role="img" aria-label="Free shipping"><title>Free shipping</title>',
+  'aria-hidden="true">'
+);
+
 function stepPairs() {
   // Main offer is the 2-pack (selected by default, strongest emphasis). The
   // 5-pack is the value anchor, kept last so $115 isn't the first price seen.
@@ -625,7 +631,7 @@ function stepPairs() {
   };
   const shipHtml = (r) =>
     r.n >= 2
-      ? `<span class="pair-free">${PLANE_SVG}Free shipping</span>`
+      ? `<span class="pair-free">${PLANE_ICON}Free shipping</span>`
       : delivered1
       ? `<span class="pair-free is-paid">${aud(delivered1)} delivered</span>`
       : "";
