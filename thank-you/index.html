@@ -17,6 +17,8 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../assets/css/site.css" />
+    <!-- Meta Pixel (+ GA4 when set): assets/js/tracking.js -->
+    <script src="../assets/js/tracking.js"></script>
   </head>
 
   <body>
@@ -135,6 +137,9 @@
         var p = new URLSearchParams(location.search);
         var ref =
           p.get("orderId") || p.get("orderNumber") || p.get("order_id") || "";
+        // Report the sale to Meta (and GA4). tracking.js only counts it if
+        // this browser started a checkout, and never twice for one order.
+        if (window.blxTrack) window.blxTrack.purchase(ref);
         if (ref) {
           var node = document.getElementById("order-ref");
           node.textContent = "Order reference: " + ref;

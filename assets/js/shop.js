@@ -20,7 +20,23 @@
 const CFG = window.WIX_CONFIG || {};
 const TOKENS_KEY = "blaxland_wix_tokens";
 
-const state = { client: null, version: null, product: null, selection: {}, qty: 2 };
+const state = { client: null, version: null, product: null, selection: {}, qty: 2, total: null };
+
+/* Ad tracking (assets/js/tracking.js). Safe if that file didn't load. */
+function track(name, extra) {
+  const t = window.blxTrack;
+  if (!t || typeof t[name] !== "function") return;
+  try {
+    t[name]({
+      currency: CFG.currency || "AUD",
+      contentId: state.product?.id || CFG.productId,
+      contentName: state.product?.name || "BLAXLAND AIR",
+      ...extra,
+    });
+  } catch (err) {
+    console.warn("[blaxland] tracking:", err);
+  }
+}
 
 /* ---------- welcome discount (Omnisend signup -> Wix coupon) ----------
  * The signup itself lives in Omnisend. All this does is remember, on this
@@ -801,6 +817,7 @@ async function quoteOrder() {
     if (disc > 0) set("#q-disc", `−${wixMoney(p.discount)}`);
     set("#q-ship", ship > 0 ? wixMoney(p.shipping) : "Free");
     set("#q-total", wixMoney(p.total) || "—");
+    state.total = Number(p.total?.amount) || null;
     set("#q-note", "Calculated by our checkout for delivery within Australia.");
   } catch (err) {
     if (seq !== quoteSeq) return;
@@ -822,6 +839,8 @@ function showStep(target, animate) {
   updateProgress();
   updateActions();
   if (target === 3) updateReview();
+  // Product screen is open. tracking.js sends this once per page load.
+  track("viewContent", { value: BUNDLES?.single?.price, qty: 1 });
 
   const body = el("#flow-body");
   if (cur === next || !animate || prefersReducedMotion()) {
@@ -1141,6 +1160,11 @@ async function onBuy(e) {
 
     const url = redirect?.redirectSession?.fullUrl;
     if (!url) throw new Error("Wix did not return a checkout URL.");
+
+    // Wix's own total when the review step got one, else the bundle price.
+    const order = { value: state.total ?? packPrice(state.qty), qty: state.qty };
+    track("addToCart", order);
+    track("initiateCheckout", order);
     // Pass the URL through untouched — its query string carries state Wix
     // needs to render the hosted page, and the docs are explicit that it must
     // not be stripped, reordered or rewritten.

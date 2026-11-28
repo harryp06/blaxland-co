@@ -25,6 +25,7 @@ policies.html       shipping, returns, privacy and terms
 assets/css/site.css design tokens and all styling
 assets/js/config.js >>> THE ONLY FILE YOU NEED TO EDIT <<<
 assets/js/site.js   wires the buttons to the links in config.js
+assets/js/tracking.js  Meta Pixel (+ GA4 when an ID is set) and ad events
 .nojekyll           tells GitHub Pages to serve the files as-is
 ```
 
@@ -70,6 +71,15 @@ routes on the address bar: `#lift`, `#size`, `#pairs`, `#checkout`; old
 live Wix product — lift, size, pairs, then a review with the price and the
 Checkout button. Back (arrow, phone gesture or browser) steps back one screen
 and never leaves the site.
+
+## Tracking
+
+`assets/js/tracking.js` loads the Meta Pixel (ID `966645636064583`, carried
+over from the Base44 build) on every page and sends PageView, ViewContent
+(product screen opens), AddToCart + InitiateCheckout (Checkout pressed) and
+Purchase (thank-you page, only if this browser started a checkout, once per
+order). To add Google Analytics, paste the GA4 Measurement ID (`G-…`) into
+`ga4Id` in that file; the same events then go to GA4 too.
 
 ## Local preview
 
