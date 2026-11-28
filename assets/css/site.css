@@ -1678,8 +1678,115 @@ html.no-anim .home-view {
   text-align: center;
 }
 
-.hero-shot {
-  margin-top: 2.5rem;
+/* ---------- hero: cream panel, three lifts cross-fading ----------
+   The opening view is now a light panel on the dark page. Type sits in --ink
+   on --paper (18.7:1) and the lime button stays the one loud thing. The three
+   side-on lifts cross-fade shortest-first, so the sequence itself shows what
+   the product does without a word of copy or a claim about height gained. */
+
+.hero {
+  padding-inline: 1.25rem;
+}
+
+.hero-panel {
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding-block: clamp(2rem, 6vw, 3.25rem);
+}
+
+.hero-panel .eyebrow {
+  color: var(--ink-soft);
+}
+
+.hero-panel h1 {
+  color: var(--ink);
+}
+
+.hero-panel .lede {
+  color: var(--ink-soft);
+  margin-inline: auto;
+}
+
+.hero-carousel {
+  display: block;
+  position: relative;
+  width: 100%;
+  margin-top: clamp(1.5rem, 5vw, 2.25rem);
+  aspect-ratio: 1.7787;
+  border-radius: var(--radius);
+  background: var(--paper);
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: heroLift 13.5s infinite;
+  animation-delay: calc(var(--i) * 4.5s);
+}
+
+/* 4.5s a slide, roughly half a second of cross-fade at each handover. */
+@keyframes heroLift {
+  0% { opacity: 0; }
+  3.7% { opacity: 1; }
+  29.6% { opacity: 1; }
+  33.3% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.hero-slide-cap {
+  position: absolute;
+  left: 50%;
+  bottom: 0.35rem;
+  transform: translateX(-50%);
+  color: var(--ink);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Motion is the whole point of the carousel, so when it is unwelcome the
+   first lift simply stays put rather than the panel sitting empty. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide {
+    animation: none;
+    opacity: 0;
+  }
+  .hero-slide:first-child {
+    opacity: 1;
+  }
+}
+
+/* ---------- photos are a way into the product ----------
+   Every shot on the home page is a link to the lift chooser. A visitor who
+   taps a photo is asking to see the thing, and the old page gave them nothing
+   to tap. */
+
+.shot-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.shot-link:hover,
+.shot-link:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1.25rem hsl(0 0% 0% / 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shot-link {
+    transition: none;
+  }
+  .shot-link:hover,
+  .shot-link:focus-visible {
+    transform: none;
+  }
 }
 
 .shot-wide {
