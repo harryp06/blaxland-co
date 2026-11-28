@@ -985,12 +985,16 @@ function fallback(message) {
   // console, where Harry can read it and a customer never has to.
   console.warn("[blaxland] Wix storefront unavailable:", message);
 
-  // Shown everywhere while we are still bringing this online. There are no
-  // customers yet, and a visible reason is worth far more right now than a
-  // tidy page that hides why the store isn't loading. Restrict this to the
-  // preview host again once the first real order has gone through.
+  // The raw reason is a diagnostic, not customer copy. It was shown on every
+  // host while there was no traffic to embarrass, on the understanding that it
+  // would be restricted again "once the first real order has gone through".
+  // Paid traffic now arrives BEFORE that order, so the gate moves to the host:
+  // a visitor who cost money to acquire must never read "Failed to fetch"
+  // under the Opening soon panel. Same preview test as checkoutUrls().
+  const onPreview =
+    location.hostname.endsWith("github.io") || location.hostname === "localhost";
   const note = el("#shop-fallback");
-  if (note) {
+  if (note && onPreview) {
     note.hidden = false;
     note.textContent = `Store not loading: ${message}`;
   }
