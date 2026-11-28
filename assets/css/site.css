@@ -1645,3 +1645,62 @@ html.no-anim .home-view {
   margin-top: 0.2rem;
   color: var(--lime);
 }
+
+/* ---------- product photography ----------
+   Every shot was taken on a near-white studio background, and this page is
+   near-black. Knocking the background out leaves a pale halo where the drop
+   shadow sits, so instead each photo sits on a cream panel: the white ground
+   then reads as a deliberate light surface rather than a hole in the page.
+   --paper is the same cream the buy block already uses, so no new colour
+   enters the palette and lime stays the only accent. */
+
+.shot {
+  margin: 0;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+/* The blurred placeholder sits on cream too, so the first paint matches the
+   photo that lands on top of it. */
+.shot .ph {
+  background-color: var(--paper);
+}
+
+/* Black on cream. Lime is never text on paper — 1.0:1, invisible. */
+.shot figcaption {
+  padding: 0.55rem 0.25rem 0.15rem;
+  color: var(--ink);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.hero-shot {
+  margin-top: 2.5rem;
+}
+
+.shot-wide {
+  margin-top: 2rem;
+}
+
+.shot-row {
+  margin-top: 1.5rem;
+}
+
+/* Two up on a phone, four up from tablet. No horizontal scroller: a grid
+   cannot trap a vertical swipe the way a scroller can. */
+.gallery-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 2rem;
+}
+
+@media (min-width: 46rem) {
+  .gallery-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
