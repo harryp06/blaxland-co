@@ -41,6 +41,9 @@
       s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
     })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
     /* eslint-enable */
+    // The product screen changes the address bar (#lift, #size...). Without
+    // this, Meta counts each of those as an extra PageView.
+    window.fbq.disablePushState = true;
     window.fbq("init", TRACKING.metaPixelId);
     window.fbq("track", "PageView");
   }
